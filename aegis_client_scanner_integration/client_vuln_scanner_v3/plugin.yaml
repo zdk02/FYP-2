@@ -1,0 +1,95 @@
+###############################################################################
+# AEGIS Plugin: MCP Client Vulnerability Scanner v3.0
+# Pillar: Client-Side (Pillar 3)
+# Architecture: Multi-Layer Verification (version + environment + active)
+###############################################################################
+
+id: client_vuln_scanner
+name: "MCP Client Vulnerability Scanner"
+version: "3.0.0"
+author: "AEGIS Team"
+description: >
+  Enterprise-grade MCP client vulnerability scanner with three-layer
+  verification: (1) version correlation, (2) environment/config analysis,
+  (3) active non-destructive verification probes. Each finding includes a
+  confidence score based on how many layers confirmed it. Fully YAML-driven —
+  add clients, CVEs, and verification checks without code changes.
+
+pillar: client
+category: reconnaissance
+subcategory: vulnerability_scanning
+severity: high
+attack_type: scanner
+
+tags:
+  - mcp
+  - client
+  - cve
+  - fingerprint
+  - version-detection
+  - active-verification
+  - vulnerability-scanner
+
+config_schema:
+  timeout:
+    type: integer
+    default: 30
+    description: "Request timeout in seconds"
+  scan_depth:
+    type: string
+    default: "full"
+    enum: ["quick", "standard", "full"]
+    description: >
+      quick  = Layer 1 only (fingerprint + version match)
+      standard = Layer 1 + 2 (+ environment/config checks)
+      full   = Layer 1 + 2 + 3 (+ active verification probes)
+  client_hint:
+    type: string
+    default: "auto"
+    description: "'auto' scans all clients in database. Comma-separated keys to target specific clients."
+  check_local:
+    type: boolean
+    default: true
+    description: "Scan local system (processes, configs, version commands)"
+  check_remote:
+    type: boolean
+    default: true
+    description: "Probe remote endpoints for MCP indicators"
+  min_severity:
+    type: string
+    default: "low"
+    enum: ["critical", "high", "medium", "low"]
+    description: "Minimum CVE severity to include in findings"
+  min_confidence:
+    type: string
+    default: "low"
+    enum: ["confirmed", "high", "medium", "low"]
+    description: >
+      Minimum confidence to report.
+      confirmed = active verification succeeded
+      high      = version match + environment confirms
+      medium    = version match only
+      low       = client detected but version unknown
+
+default_config:
+  timeout: 30
+  scan_depth: "full"
+  client_hint: "auto"
+  check_local: true
+  check_remote: true
+  min_severity: "low"
+  min_confidence: "low"
+
+prerequisites: >
+  cve_database.yaml in same directory. PyYAML + requests installed.
+  Network access for remote probes. Local access for process/config scanning.
+
+script_language: python
+script_file: client_vuln_scanner.py
+
+data_files:
+  - cve_database.yaml
+
+mitre_attack:
+  tactics: [TA0043, TA0007]
+  techniques: [T1592, T1518]
