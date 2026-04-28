@@ -1,0 +1,734 @@
+schema_version: '3.0'
+dangerous_config_patterns:
+- pattern: enableAllProjectMcpServers.*true
+  description: enableAllProjectMcpServers enabled — auto-approves all project MCP servers
+  severity: critical
+  related_cve: CVE-2025-59536
+- pattern: ANTHROPIC_BASE_URL
+  description: ANTHROPIC_BASE_URL override — API traffic may be redirected
+  severity: high
+  related_cve: CVE-2026-21852
+- pattern: chat\.tools\.autoApprove.*true
+  description: Copilot YOLO mode (autoApprove) — all tool calls auto-approved
+  severity: critical
+  related_cve: CVE-2025-53773
+- pattern: curl|wget|nc\s|ncat|bash\s+-c|sh\s+-c|powershell|cmd\.exe
+  description: Suspicious shell command in MCP server configuration
+  severity: high
+- pattern: runOn.*folderOpen
+  description: Auto-run task on folder open — code executes without consent
+  severity: high
+  related_cve: CURSOR-WORKSPACE-TRUST
+- pattern: '"command"\s*:\s*"(?!node|npx|python|uvx|docker|deno)[^"]*"'
+  description: Non-standard MCP server command (review manually)
+  severity: medium
+remote_probe_paths:
+- /mcp
+- /sse
+- /health
+- /api/health
+- /.well-known/mcp.json
+- /v1/mcp
+websocket_probe_ports:
+- 3000
+- 3001
+- 8080
+- 8765
+- 9222
+interesting_headers:
+- server
+- x-powered-by
+- x-mcp-version
+- x-mcp-server
+- x-anthropic-version
+clients:
+  claude_code:
+    display_name: Claude Code
+    vendor: Anthropic
+    type: cli
+    detection:
+      process_names:
+      - claude
+      - claude-code
+      npm_package: '@anthropic-ai/claude-code'
+      config_paths:
+      - ~/.claude/
+      - .claude/settings.json
+      - .mcp.json
+      version_commands:
+      - claude --version
+      - npm list -g @anthropic-ai/claude-code --depth=0
+    cves:
+    - id: CVE-2025-64755
+      title: Sed Command Validation Bypass — Arbitrary File Writes
+      severity: high
+      cvss: 8.1
+      cvss_vector: CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N
+      cwe: CWE-78
+      affected_versions: < 2.0.31
+      fixed_version: 2.0.31
+      description: 'Error in sed command parsing allows bypass of read-only validation to write arbitrary files on the host via the sed ''e'' modifier.
+
+        '
+      exploitation: 'Craft sed command using ''e'' modifier for shell execution, bypassing the allowlist regex that only blocked -i/--in-place flags.
+
+        '
+      remediation: Update to Claude Code >= 2.0.31
+      references:
+      - https://github.com/anthropics/claude-code/security/advisories/GHSA-7mv8-j34q-vp7q
+      reported_by: Adam Chester — SpecterOps
+      disclosure_date: '2025-11-20'
+      env_checks:
+      - type: command_output
+        cmd: which sed
+        expect_pattern: /sed
+        description: sed is available on system (required for exploitation)
+      active_checks:
+      - type: npm_installed
+        package: '@anthropic-ai/claude-code'
+        vulnerable_below: 2.0.31
+        description: npm package version is below fix
+    - id: CVE-2026-25723
+      title: Piped sed Command Injection — File Write Restriction Bypass
+      severity: high
+      cvss: 7.7
+      cwe: CWE-78
+      affected_versions: < 2.0.55
+      fixed_version: 2.0.55
+      description: 'Piped sed operations with echo bypass file write restrictions, enabling writes to .claude/ and paths outside project scope.
+
+        '
+      remediation: Update to Claude Code >= 2.0.55
+      references:
+      - https://github.com/anthropics/claude-code/security/advisories/GHSA-mhg7-666j-cqg4
+      reported_by: hackerone.com/nil221
+      disclosure_date: '2026-02-06'
+      active_checks:
+      - type: npm_installed
+        package: '@anthropic-ai/claude-code'
+        vulnerable_below: 2.0.55
+        description: npm package version is below fix
+    - id: CVE-2025-54794
+      title: Path Restriction Bypass — Directory Containment Escape
+      severity: high
+      cvss: 7.7
+      cwe: CWE-22
+      affected_versions: < 0.2.111
+      fixed_version: 0.2.111
+      description: 'Naive prefix-matching in path validation allows sandbox escape via sibling directory names that pass the prefix check.
+
+        '
+      remediation: Update to Claude Code >= 0.2.111
+      references:
+      - https://cymulate.com/blog/cve-2025-547954-54795-claude-inverseprompt/
+      reported_by: Elad Beber — Cymulate
+      disclosure_date: '2025-03-15'
+    - id: CVE-2025-54795
+      title: Command Injection via Whitelisted Commands (InversePrompt)
+      severity: high
+      cvss: 8.7
+      cwe: CWE-78
+      affected_versions: < 1.0.20
+      fixed_version: 1.0.20
+      description: 'Improper input sanitization in whitelisted command handling enables arbitrary shell execution without user confirmation.
+
+        '
+      remediation: Update to Claude Code >= 1.0.20
+      references:
+      - https://cymulate.com/blog/cve-2025-547954-54795-claude-inverseprompt/
+      reported_by: Elad Beber — Cymulate
+      disclosure_date: '2025-03-15'
+    - id: CVE-2025-66032
+      title: Multiple Blocklist Bypass — 8 Command Execution Methods
+      severity: high
+      cvss: 8.7
+      cwe: CWE-78
+      affected_versions: < 1.0.93
+      fixed_version: 1.0.93
+      description: 'Eight distinct blocklist bypass methods: sed e modifier, xargs flag confusion, git --upload-pack, env abuse, and more.
+
+        '
+      remediation: Update to Claude Code >= 1.0.93 (switched to allowlist)
+      references:
+      - https://flatt.tech/research/posts/pwning-claude-code-in-8-different-ways/
+      reported_by: GMO Flatt Security
+      disclosure_date: '2026-01-12'
+    - id: CVE-2025-59536
+      title: RCE via MCP Config & Hooks — User Consent Bypass
+      severity: critical
+      cvss: 8.7
+      cwe: CWE-94
+      affected_versions: < 1.0.111
+      fixed_version: 1.0.111
+      description: 'Repository-controlled .mcp.json and .claude/settings.json execute commands via MCP init and Hooks. enableAllProjectMcpServers bypasses consent; commands run before trust dialog.
+
+        '
+      remediation: Update to Claude Code >= 1.0.111
+      references:
+      - https://research.checkpoint.com/2026/rce-and-api-token-exfiltration-through-claude-code-project-files-cve-2025-59536/
+      reported_by: Check Point Research
+      disclosure_date: '2025-10-03'
+      env_checks:
+      - type: file_exists
+        path: .mcp.json
+        description: Project-level .mcp.json exists (attack delivery mechanism)
+      - type: file_contains
+        path: .claude/settings.json
+        pattern: enableAllProjectMcpServers
+        description: enableAllProjectMcpServers found in project settings
+      active_checks:
+      - type: config_json_value
+        path: .claude/settings.json
+        key: enableAllProjectMcpServers
+        expect: 'true'
+        description: enableAllProjectMcpServers is actively set to true
+    - id: CVE-2026-21852
+      title: API Key Exfiltration via ANTHROPIC_BASE_URL Override
+      severity: medium
+      cvss: 5.3
+      cwe: CWE-200
+      affected_versions: < 2.0.65
+      fixed_version: 2.0.65
+      description: 'Repo settings redirect API traffic (including API key in auth header) to attacker endpoint before trust prompt is shown.
+
+        '
+      remediation: Update to Claude Code >= 2.0.65
+      references:
+      - https://research.checkpoint.com/2026/rce-and-api-token-exfiltration-through-claude-code-project-files-cve-2025-59536/
+      reported_by: Check Point Research
+      disclosure_date: '2026-01-21'
+      env_checks:
+      - type: file_contains
+        path: .claude/settings.json
+        pattern: ANTHROPIC_BASE_URL
+        description: ANTHROPIC_BASE_URL override found in settings
+      active_checks:
+      - type: config_json_value
+        path: .claude/settings.json
+        key: env.ANTHROPIC_BASE_URL
+        expect: .*
+        description: ANTHROPIC_BASE_URL is set to a custom value
+    - id: CVE-2024-2222
+      title: claudecode
+      severity: medium
+      cvss: 8
+      cvss_vector: CVSS3.1
+      cwe: CWE78
+      affected_versions: <2.92
+      fixed_version: ''
+      disclosure_date: ''
+      reported_by: ''
+      description: ddssd
+      exploitation: ''
+      remediation: ''
+      references: []
+      env_checks: []
+      active_checks: []
+  claude_vscode_ext:
+    display_name: Claude Code for VS Code
+    vendor: Anthropic
+    type: ide_extension
+    detection:
+      process_names:
+      - code
+      - code-insiders
+      config_paths:
+      - ~/.vscode/extensions/
+      version_commands:
+      - code --list-extensions --show-versions 2>/dev/null | grep -i claude
+      indicators:
+      - claude-code
+      - anthropic
+    cves:
+    - id: CVE-2025-52882
+      title: WebSocket Authentication Bypass — Cross-Site MCP Hijack
+      severity: high
+      cvss: 8.8
+      cwe: CWE-306
+      affected_versions: <= 1.0.23
+      fixed_version: 1.0.24
+      description: 'Unauthenticated local WebSocket server allows cross-site attacks to execute MCP commands, read files, and run Jupyter code.
+
+        '
+      remediation: Update Claude Code VS Code extension to >= 1.0.24
+      references:
+      - https://securitylabs.datadoghq.com/articles/claude-mcp-cve-2025-52882/
+      reported_by: Datadog Security Labs
+      disclosure_date: '2025-06-24'
+      env_checks:
+      - type: port_open
+        host: 127.0.0.1
+        port: 3000
+        description: Port 3000 open (common Claude MCP WebSocket port)
+      - type: port_open
+        host: 127.0.0.1
+        port: 8765
+        description: Port 8765 open (alternate MCP WebSocket port)
+      active_checks:
+      - type: ws_no_auth
+        host: 127.0.0.1
+        port: 3000
+        description: WebSocket on 3000 accepts unauthenticated connections
+      - type: ws_no_auth
+        host: 127.0.0.1
+        port: 8765
+        description: WebSocket on 8765 accepts unauthenticated connections
+  claude_desktop:
+    display_name: Claude Desktop
+    vendor: Anthropic
+    type: desktop_app
+    detection:
+      process_names:
+      - Claude
+      - claude-desktop
+      - Claude Desktop
+      config_paths:
+      - ~/Library/Application Support/Claude/
+      - '%APPDATA%/Claude/'
+      - ~/.config/Claude/
+      indicators:
+      - claude_desktop_config.json
+    cves:
+    - id: LAYERX-2026-001
+      title: Zero-Click RCE via MCP Extension Chaining (DXT)
+      severity: critical
+      cvss: 10.0
+      cwe: CWE-94
+      affected_versions: all versions with DXT support
+      fixed_version: unpatched (Anthropic declined fix as of Feb 2026)
+      description: 'DXT extensions run unsandboxed with full privileges. Claude chains low-risk connectors to high-risk executors without consent. Crafted calendar event triggers zero-click RCE.
+
+        '
+      remediation: Disable MCP extensions or restrict to read-only tools.
+      references:
+      - https://layerxsecurity.com/blog/claude-desktop-extensions-rce/
+      reported_by: Roy Paz — LayerX Security
+      disclosure_date: '2026-02-12'
+      env_checks:
+      - type: file_exists
+        path: ~/Library/Application Support/Claude/extensions/
+        description: Claude Desktop extensions directory exists (DXT capable)
+      - type: file_exists
+        path: '%APPDATA%/Claude/extensions/'
+        description: Claude Desktop extensions directory exists (Windows)
+      active_checks:
+      - type: file_contains
+        path: ~/Library/Application Support/Claude/claude_desktop_config.json
+        pattern: mcpServers
+        description: MCP servers configured in Claude Desktop (chaining possible)
+  anthropic_filesystem_mcp:
+    display_name: Anthropic Filesystem MCP Server
+    vendor: Anthropic
+    type: mcp_server
+    detection:
+      npm_package: '@modelcontextprotocol/server-filesystem'
+      config_paths:
+      - claude_desktop_config.json
+      indicators:
+      - server-filesystem
+    cves:
+    - id: CVE-2025-53110
+      title: Directory Containment Bypass (EscapeRoute)
+      severity: high
+      cvss: 7.3
+      cwe: CWE-22
+      affected_versions: < patched
+      fixed_version: patched
+      description: Prefix-matching allows sandbox escape via crafted paths.
+      remediation: Update @modelcontextprotocol/server-filesystem
+      references:
+      - https://cymulate.com/blog/cve-2025-53109-53110-escaperoute-anthropic/
+      reported_by: Elad Beber — Cymulate
+      disclosure_date: '2025-07-02'
+      active_checks:
+      - type: npm_installed
+        package: '@modelcontextprotocol/server-filesystem'
+        vulnerable_below: 2025.0.0
+        description: Filesystem MCP server npm version check
+    - id: CVE-2025-53109
+      title: Symlink Bypass to Code Execution (EscapeRoute)
+      severity: high
+      cvss: 8.4
+      cwe: CWE-59
+      affected_versions: < patched
+      fixed_version: patched
+      description: Crafted symlinks bypass access enforcement for arbitrary r/w and code execution.
+      remediation: Update @modelcontextprotocol/server-filesystem
+      references:
+      - https://cymulate.com/blog/cve-2025-53109-53110-escaperoute-anthropic/
+      reported_by: Elad Beber — Cymulate
+      disclosure_date: '2025-07-02'
+    - id: CVE-2025-68143
+      title: Git MCP Server — Arbitrary Path Repository Creation
+      severity: high
+      cvss: 7.5
+      cwe: CWE-22
+      affected_versions: < patched
+      fixed_version: patched
+      description: Allowed git repo creation in arbitrary filesystem paths.
+      remediation: Apply latest patches from Anthropic
+      references:
+      - https://www.pixee.ai/weekly-briefings/ai-coding-platforms-vulnerabilities-scanners-miss-2026-01-21
+      disclosure_date: '2026-01-21'
+    - id: CVE-2025-68145
+      title: Git MCP Server — Path Validation Bypass
+      severity: high
+      cvss: 7.5
+      cwe: CWE-22
+      affected_versions: < patched
+      fixed_version: patched
+      description: Path validation bypass in Anthropic Git MCP Server.
+      remediation: Apply latest patches from Anthropic
+      references:
+      - https://www.pixee.ai/weekly-briefings/ai-coding-platforms-vulnerabilities-scanners-miss-2026-01-21
+      disclosure_date: '2026-01-21'
+  mcp_inspector:
+    display_name: MCP Inspector
+    vendor: Anthropic (Community)
+    type: debug_tool
+    detection:
+      npm_package: '@anthropic-ai/mcp-inspector'
+      process_names:
+      - mcp-inspector
+    cves:
+    - id: CVE-2025-49596
+      title: RCE via Browser Exploitation + CSRF
+      severity: critical
+      cvss: 9.4
+      cwe: CWE-352
+      affected_versions: < 0.14.1
+      fixed_version: 0.14.1
+      description: Remote code execution via browser-based CSRF.
+      remediation: Update MCP Inspector to >= 0.14.1
+      references:
+      - https://securitylabs.datadoghq.com/articles/claude-mcp-cve-2025-52882/
+      disclosure_date: '2025-06-13'
+      active_checks:
+      - type: npm_installed
+        package: '@anthropic-ai/mcp-inspector'
+        vulnerable_below: 0.14.1
+        description: MCP Inspector version is below fix
+      - type: http_probe
+        url: http://127.0.0.1:6274
+        expect_status:
+        - 200
+        description: MCP Inspector web UI is running and accessible
+  mcp_remote:
+    display_name: mcp-remote
+    vendor: Community (npm)
+    type: proxy
+    detection:
+      npm_package: mcp-remote
+      process_names:
+      - mcp-remote
+    cves:
+    - id: CVE-2025-6514
+      title: Critical RCE via Untrusted OAuth Endpoint
+      severity: critical
+      cvss: 9.6
+      cwe: CWE-78
+      affected_versions: < 0.1.16
+      fixed_version: 0.1.16
+      description: 'mcp-remote trusts server-provided OAuth endpoints blindly. Malicious server triggers OS command execution. 437k+ downloads affected.
+
+        '
+      remediation: Update mcp-remote >= 0.1.16. Only connect via HTTPS.
+      references:
+      - https://jfrog.com/blog/2025-6514-critical-mcp-remote-rce-vulnerability/
+      reported_by: JFrog Security Research
+      disclosure_date: '2025-07-09'
+      active_checks:
+      - type: npm_installed
+        package: mcp-remote
+        vulnerable_below: 0.1.16
+        description: mcp-remote npm version is below fix
+  cursor:
+    display_name: Cursor IDE
+    vendor: Anysphere
+    type: ide
+    detection:
+      process_names:
+      - Cursor
+      - cursor
+      config_paths:
+      - .cursor/
+      - .cursor/rules/mcp.json
+      - ~/.cursor/
+      version_commands:
+      - cursor --version
+    cves:
+    - id: CVE-2025-54136
+      title: MCPoison — Persistent RCE via MCP Trust Bypass
+      severity: high
+      cvss: 7.2
+      cwe: CWE-345
+      affected_versions: <= 1.2.4
+      fixed_version: '1.3'
+      description: 'Once MCP approved, Cursor never re-validates. Attacker replaces trusted config with payload for persistent silent RCE.
+
+        '
+      remediation: Update Cursor to >= 1.3
+      references:
+      - https://research.checkpoint.com/2025/cursor-vulnerability-mcpoison/
+      reported_by: Check Point Research
+      disclosure_date: '2025-08-05'
+      env_checks:
+      - type: file_exists
+        path: .cursor/rules/mcp.json
+        description: Project-level MCP config exists (attack vector)
+      active_checks:
+      - type: file_contains
+        path: .cursor/rules/mcp.json
+        pattern: '"mcpServers"'
+        description: MCP servers are configured in project (modifiable for RCE)
+    - id: CVE-2025-54135
+      title: CurXecute — RCE via MCP Auto-Start + Prompt Injection
+      severity: high
+      cvss: 8.1
+      cwe: CWE-94
+      affected_versions: <= 1.2.4
+      fixed_version: '1.3'
+      description: 'Prompt injection via connected MCP modifies global mcp.json for immediate command execution before user can reject.
+
+        '
+      remediation: Update Cursor to >= 1.3
+      references:
+      - https://www.tenable.com/blog/faq-cve-2025-54135-cve-2025-54136-vulnerabilities-in-cursor-curxecute-mcpoison
+      reported_by: AIM Security
+      disclosure_date: '2025-08-01'
+    - id: CVE-2025-59944
+      title: Case-Sensitivity Bug — Sensitive File Overwrite Bypass
+      severity: high
+      cvss: 7.8
+      cwe: CWE-178
+      affected_versions: < 1.7
+      fixed_version: '1.7'
+      description: 'Case-insensitive filesystems allow .cursor/mcp.json overwrite via case variations, leading to RCE with prompt injection.
+
+        '
+      remediation: Update Cursor to >= 1.7
+      references:
+      - https://www.lakera.ai/blog/cursor-vulnerability-cve-2025-59944
+      reported_by: Brett Gustafson — Lakera
+      disclosure_date: '2025-10-10'
+      env_checks:
+      - type: command_output
+        cmd: python3 -c "import sys; print(sys.platform)"
+        expect_pattern: darwin|win32
+        description: Running on case-insensitive filesystem (macOS/Windows)
+    - id: CVE-2025-64106
+      title: MCP Deep-Link Installation RCE
+      severity: high
+      cvss: 8.8
+      cwe: CWE-345
+      affected_versions: < patched
+      fixed_version: patched
+      description: Insufficient validation in MCP deep-link handling masks unsafe behavior.
+      remediation: Update Cursor to latest version
+      references:
+      - https://cyata.ai/blog/cyata-research-critical-flaw-in-cursor-mcp-installation/
+      reported_by: Cyata Security
+      disclosure_date: '2025-12-19'
+    - id: CVE-2025-49150
+      title: IDEsaster — Prompt Injection to File Exfiltration
+      severity: high
+      cvss: 7.8
+      cwe: CWE-74
+      affected_versions: < patched
+      fixed_version: patched
+      description: Prompt injection reads files via legitimate tools and exfiltrates via remote JSON schema.
+      remediation: Update Cursor to latest version
+      references:
+      - https://thehackernews.com/2025/12/researchers-uncover-30-flaws-in-ai.html
+      reported_by: Ari Marzouk (MaccariTA)
+      disclosure_date: '2025-12-15'
+    - id: CURSOR-WORKSPACE-TRUST
+      title: Open-Folder Autorun — Silent Code Execution
+      severity: high
+      cvss: 8.0
+      cwe: CWE-94
+      affected_versions: default configuration (Workspace Trust off)
+      fixed_version: mitigated by enabling Workspace Trust
+      description: Workspace Trust disabled by default; .vscode/tasks.json auto-executes on folder open.
+      remediation: Enable Workspace Trust in Cursor settings.
+      references:
+      - https://www.oasis.security/blog/cursor-security-flaw
+      reported_by: Oasis Security
+      disclosure_date: '2025-09-10'
+      env_checks:
+      - type: file_exists
+        path: .vscode/tasks.json
+        description: Project has .vscode/tasks.json (autorun vector)
+      active_checks:
+      - type: file_contains
+        path: .vscode/tasks.json
+        pattern: runOn.*folderOpen
+        description: tasks.json has folderOpen autorun configured
+  github_copilot:
+    display_name: GitHub Copilot
+    vendor: Microsoft / GitHub
+    type: ide_extension
+    detection:
+      process_names:
+      - code
+      - code-insiders
+      config_paths:
+      - .vscode/settings.json
+      version_commands:
+      - code --list-extensions --show-versions 2>/dev/null | grep -i copilot
+      indicators:
+      - github.copilot
+      - github.copilot-chat
+    cves:
+    - id: CVE-2025-53773
+      title: YOLO Mode RCE via Prompt Injection
+      severity: high
+      cvss: 7.8
+      cwe: CWE-77
+      affected_versions: < August 2025 patch
+      fixed_version: August 2025 Patch Tuesday
+      description: 'Prompt injection enables autoApprove (YOLO mode), then executes arbitrary commands. Can create ZombAI botnets.
+
+        '
+      remediation: Apply August 2025 Patch Tuesday updates.
+      references:
+      - https://embracethered.com/blog/posts/2025/github-copilot-remote-code-execution-via-prompt-injection/
+      reported_by: Johann Rehberger (Embrace The Red)
+      disclosure_date: '2025-08-12'
+      env_checks:
+      - type: file_exists
+        path: .vscode/settings.json
+        description: Project has .vscode/settings.json (injection target)
+      active_checks:
+      - type: file_contains
+        path: .vscode/settings.json
+        pattern: chat\.tools\.autoApprove.*true
+        description: YOLO mode (autoApprove) is currently ENABLED
+    - id: CVE-2025-64660
+      title: Workspace Config Override — RCE via *.code-workspace
+      severity: high
+      cvss: 7.8
+      cwe: CWE-94
+      affected_versions: < patched
+      fixed_version: patched
+      description: Prompt injection edits workspace config for code execution.
+      remediation: Update VS Code and Copilot to latest.
+      references:
+      - https://www.rapid7.com/db/vulnerabilities/microsoft-vs_code-cve-2025-64660/
+      reported_by: Ari Marzouk (MaccariTA)
+      disclosure_date: '2025-12-15'
+  windsurf:
+    display_name: Windsurf
+    vendor: Codeium
+    type: ide
+    detection:
+      process_names:
+      - windsurf
+      - Windsurf
+      config_paths:
+      - .windsurf/
+      version_commands:
+      - windsurf --version
+    cves:
+    - id: WINDSURF-EXFIL-2025
+      title: read_url_content Data Exfiltration via Prompt Injection
+      severity: high
+      cvss: 8.0
+      cwe: CWE-200
+      affected_versions: known since May 2025
+      fixed_version: partially mitigated
+      description: 'read_url_content invoked without approval during prompt injection; exfiltrates .env, API keys, config via URL parameters.
+
+        '
+      remediation: Disable MCP or use read-only tools. Monitor outbound traffic.
+      references:
+      - https://inhaq.com/blog/google-antigravity-vs-cursor-kiro-windsurf-security-comparison-2026.html
+      reported_by: Multiple researchers
+      disclosure_date: '2025-05-01'
+      env_checks:
+      - type: file_exists
+        path: .env
+        description: .env file exists in project (exfiltration target)
+  zed:
+    display_name: Zed
+    vendor: Zed Industries
+    type: ide
+    detection:
+      process_names:
+      - zed
+      - Zed
+    cves:
+    - id: CVE-2025-55012
+      title: IDEsaster — Settings File Override via Prompt Injection
+      severity: high
+      cvss: 7.8
+      cwe: CWE-74
+      affected_versions: < patched
+      fixed_version: patched
+      description: Prompt injection overrides IDE settings for code execution.
+      remediation: Update Zed to latest version.
+      references:
+      - https://thehackernews.com/2025/12/researchers-uncover-30-flaws-in-ai.html
+      reported_by: Ari Marzouk (MaccariTA)
+      disclosure_date: '2025-12-15'
+  roo_code:
+    display_name: Roo Code
+    vendor: Roo Code
+    type: ide_extension
+    detection:
+      indicators:
+      - roo-code
+      - roocode
+    cves:
+    - id: CVE-2025-53097
+      title: IDEsaster — File Read + JSON Schema Exfiltration
+      severity: high
+      cvss: 7.8
+      cwe: CWE-74
+      affected_versions: < patched
+      fixed_version: patched
+      description: Prompt injection reads sensitive files and exfiltrates via remote JSON schema.
+      remediation: Update Roo Code to latest version.
+      references:
+      - https://thehackernews.com/2025/12/researchers-uncover-30-flaws-in-ai.html
+      reported_by: Ari Marzouk (MaccariTA)
+      disclosure_date: '2025-12-15'
+    - id: CVE-2025-53536
+      title: IDEsaster — Settings Override RCE
+      severity: high
+      cvss: 7.8
+      cwe: CWE-94
+      affected_versions: < patched
+      fixed_version: patched
+      description: Prompt injection sets malicious executable paths for code execution.
+      remediation: Update Roo Code to latest version.
+      references:
+      - https://thehackernews.com/2025/12/researchers-uncover-30-flaws-in-ai.html
+      reported_by: Ari Marzouk (MaccariTA)
+      disclosure_date: '2025-12-15'
+  junie:
+    display_name: JetBrains Junie
+    vendor: JetBrains
+    type: ide_extension
+    detection:
+      process_names:
+      - idea
+      - pycharm
+      - webstorm
+      - goland
+      indicators:
+      - junie
+    cves:
+    - id: CVE-2025-58335
+      title: IDEsaster — Prompt Injection to File Exfiltration
+      severity: high
+      cvss: 7.8
+      cwe: CWE-74
+      affected_versions: < patched
+      fixed_version: patched
+      description: Prompt injection exfiltrates files via JSON schema technique.
+      remediation: Update JetBrains IDE and Junie plugin to latest.
+      references:
+      - https://thehackernews.com/2025/12/researchers-uncover-30-flaws-in-ai.html
+      reported_by: Ari Marzouk (MaccariTA)
+      disclosure_date: '2025-12-15'

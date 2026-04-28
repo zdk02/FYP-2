@@ -1,0 +1,418 @@
+{
+  "version": "1.1",
+  "description": "Minerva refined legacy attack pack — 28 focused techniques. Each script targets ONE specific flavour of its attack class; complements the Pro attacks. Every entry exposes configurable parameters for dynamic tuning.",
+  "match_existing": true,
+  "attacks": [
+    {
+      "file": "direct_prompt_injection.py",
+      "name": "Direct Prompt Injection",
+      "subcategory": "Client-Side Attacks",
+      "severity": "critical",
+      "attack_type": "injection",
+      "mitre_id": "T1059",
+      "description": "Role-hijack focused prompt injection (DAN / grandma / delimiter / override). Narrower than the Pro variant — four high-signal payloads with marker-co-occurrence confirmation. Use 'only_tool_names' to target specific tools.",
+      "config_schema": {
+        "timeout":          {"type": "integer", "default": 25, "description": "Per-request timeout (s)"},
+        "only_tool_names":  {"type": "array",   "default": [], "description": "Whitelist tool names"}
+      },
+      "default_config": {"timeout": 25, "only_tool_names": []},
+      "tags": ["mcp","prompt_injection","role_hijack","client_side"]
+    },
+    {
+      "file": "indirect_prompt_injection.py",
+      "name": "Indirect Prompt Injection",
+      "subcategory": "Client-Side Attacks",
+      "severity": "critical",
+      "attack_type": "injection",
+      "mitre_id": "T1059",
+      "description": "Resource-focused audit — fetches every MCP resource and classifies hidden directives by technique (HTML comment, markdown title attribute, code-block delimiter escape, forced tool invocation).",
+      "config_schema": {
+        "timeout":        {"type": "integer", "default": 25},
+        "max_resources":  {"type": "integer", "default": 50, "description": "Max resources to audit"}
+      },
+      "default_config": {"timeout": 25, "max_resources": 50},
+      "tags": ["mcp","prompt_injection","resources","client_side"]
+    },
+    {
+      "file": "tool_poisoning.py",
+      "name": "Tool Poisoning",
+      "subcategory": "Client-Side Attacks",
+      "severity": "high",
+      "attack_type": "manipulation",
+      "mitre_id": "T1195",
+      "description": "Laser-focused on invisible Unicode injection (zero-width, RTL override, directional formatting) in every metadata field — tool name, description, parameter docs, prompt args, resource descriptions.",
+      "config_schema": {
+        "timeout":             {"type": "integer", "default": 15},
+        "include_prompts":     {"type": "boolean", "default": true},
+        "include_resources":   {"type": "boolean", "default": true}
+      },
+      "default_config": {"timeout": 15, "include_prompts": true, "include_resources": true},
+      "tags": ["mcp","tool_poisoning","zero_width","client_side"]
+    },
+    {
+      "file": "tool_shadowing.py",
+      "name": "Tool Shadowing",
+      "subcategory": "Client-Side Attacks",
+      "severity": "medium",
+      "attack_type": "manipulation",
+      "mitre_id": "T1574",
+      "description": "Description-collision detection via text similarity (difflib ratio). Flags tool pairs whose descriptions are near-duplicates and could confuse LLM routing.",
+      "config_schema": {
+        "timeout":                {"type": "integer", "default": 15},
+        "similarity_threshold":   {"type": "number",  "default": 0.85, "description": "Minimum difflib ratio to flag (0.0-1.0)"}
+      },
+      "default_config": {"timeout": 15, "similarity_threshold": 0.85},
+      "tags": ["mcp","tool_shadowing","description_collision","client_side"]
+    },
+    {
+      "file": "tool_name_conflict.py",
+      "name": "Tool Name Conflict",
+      "subcategory": "Client-Side Attacks",
+      "severity": "high",
+      "attack_type": "exploitation",
+      "mitre_id": "T1574",
+      "description": "Exact duplicate + case/punct-variant name collisions (read-file vs Read_File). Pure static analysis — no network calls beyond the tools/list discovery.",
+      "config_schema": {
+        "timeout":                {"type": "integer", "default": 15},
+        "check_exact_duplicates": {"type": "boolean", "default": true},
+        "check_case_variants":    {"type": "boolean", "default": true, "description": "Flag case/punct variants of the same name"},
+        "exclude_names":          {"type": "array",   "default": [], "description": "Tool names to skip"}
+      },
+      "default_config": {"timeout": 15, "check_exact_duplicates": true, "check_case_variants": true, "exclude_names": []},
+      "tags": ["mcp","tool_shadowing","name_collision","client_side"]
+    },
+    {
+      "file": "tool_misuse_malicious_metadata.py",
+      "name": "Tool Misuse via Malicious Metadata",
+      "subcategory": "Client-Side Attacks",
+      "severity": "high",
+      "attack_type": "manipulation",
+      "description": "Detects 'use instead: X', fake deprecation banners, and forced prerequisite/follow-up calls in tool descriptions — metadata-level trust exploits.",
+      "config_schema": {
+        "timeout": {"type": "integer", "default": 15}
+      },
+      "default_config": {"timeout": 15},
+      "tags": ["mcp","tool_poisoning","metadata","client_side"]
+    },
+    {
+      "file": "tool_preference_manipulation.py",
+      "name": "Tool Preference Manipulation",
+      "subcategory": "Client-Side Attacks",
+      "severity": "medium",
+      "attack_type": "manipulation",
+      "description": "Flags persuasive language in tool descriptions ('preferred', 'recommended', 'always use', 'never use X') that biases LLM tool-selection.",
+      "config_schema": {
+        "timeout": {"type": "integer", "default": 15}
+      },
+      "default_config": {"timeout": 15},
+      "tags": ["mcp","tool_preference","routing_bias","client_side"]
+    },
+    {
+      "file": "tool_coverage_hijacking.py",
+      "name": "Tool Coverage Hijacking",
+      "subcategory": "Client-Side Attacks",
+      "severity": "medium",
+      "attack_type": "manipulation",
+      "description": "Flags tools with vague / broad descriptions that could intercept LLM routing from more specific siblings.",
+      "config_schema": {
+        "timeout":                  {"type": "integer", "default": 15},
+        "min_description_words":    {"type": "integer", "default": 5,  "description": "Shorter descriptions are flagged as vague"}
+      },
+      "default_config": {"timeout": 15, "min_description_words": 5},
+      "tags": ["mcp","routing_hijack","client_side"]
+    },
+    {
+      "file": "schema_inconsistencies.py",
+      "name": "Schema Inconsistencies",
+      "subcategory": "Client-Side Attacks",
+      "severity": "high",
+      "attack_type": "bypass",
+      "description": "Sends intentionally wrong-typed values (int where string declared, etc.) and flags tools that accept them — schema validation missing.",
+      "config_schema": {
+        "timeout":           {"type": "integer", "default": 20},
+        "only_tool_names":   {"type": "array",   "default": []}
+      },
+      "default_config": {"timeout": 20, "only_tool_names": []},
+      "tags": ["mcp","schema","type_confusion","client_side"]
+    },
+    {
+      "file": "slash_command_overlap.py",
+      "name": "Slash Command Overlap",
+      "subcategory": "Client-Side Attacks",
+      "severity": "high",
+      "attack_type": "exploitation",
+      "description": "Flags tool names that normalise to common client slash-commands (/help, /reset, /clear, /compact, /auth, etc.) — command hijacking vector.",
+      "config_schema": {
+        "timeout":                   {"type": "integer", "default": 15},
+        "extra_reserved_names":      {"type": "array",   "default": [], "description": "Additional names to treat as reserved"}
+      },
+      "default_config": {"timeout": 15, "extra_reserved_names": []},
+      "tags": ["mcp","slash_command","namespace","client_side"]
+    },
+    {
+      "file": "confused_ai_tool_misuse.py",
+      "name": "ConfusedAI Tool Misuse",
+      "subcategory": "Client-Side Attacks",
+      "severity": "high",
+      "attack_type": "manipulation",
+      "description": "Detects tools whose name suggests one verb class (read, list, get, view, check) but whose description mentions the opposite class (write, delete, modify) — semantic mismatch misroutes dangerous calls.",
+      "config_schema": {
+        "timeout": {"type": "integer", "default": 20}
+      },
+      "default_config": {"timeout": 20},
+      "tags": ["mcp","semantic_mismatch","client_side"]
+    },
+    {
+      "file": "multi_tool_cooperation.py",
+      "name": "Multi-Tool Cooperation",
+      "subcategory": "Client-Side Attacks",
+      "severity": "critical",
+      "attack_type": "exploitation",
+      "description": "Cross-tool exploit chain: writes a canary via a write-tool, reads via a read-tool. If the canary surfaces unsanitised, attacker-controlled data crosses trust boundaries.",
+      "config_schema": {
+        "timeout":          {"type": "integer", "default": 25},
+        "max_write_tools":  {"type": "integer", "default": 3},
+        "max_read_tools":   {"type": "integer", "default": 3}
+      },
+      "default_config": {"timeout": 25, "max_write_tools": 3, "max_read_tools": 3},
+      "tags": ["mcp","multi_tool","cross_boundary","client_side"]
+    },
+    {
+      "file": "infectious_attack.py",
+      "name": "Infectious Attack",
+      "subcategory": "Client-Side Attacks",
+      "severity": "critical",
+      "attack_type": "persistence",
+      "description": "Tests multi-hop state propagation: plant a canary via tool A, retrieve via tool B. Proves attacker-controlled state crosses tool boundaries within the LLM context.",
+      "config_schema": {
+        "timeout":    {"type": "integer", "default": 25},
+        "max_pairs":  {"type": "integer", "default": 8, "description": "Max (writer, reader) combinations to try"}
+      },
+      "default_config": {"timeout": 25, "max_pairs": 8},
+      "tags": ["mcp","infectious","propagation","client_side"]
+    },
+    {
+      "file": "mcp_credential_theft.py",
+      "name": "MCP Credential Theft",
+      "subcategory": "Client-Side Attacks",
+      "severity": "critical",
+      "attack_type": "extraction",
+      "description": "Scans every resource and tool-default response for credential patterns: API keys (OpenAI, Anthropic, Slack, GitHub, AWS, GCP), JWTs, private keys, DB URLs with embedded passwords.",
+      "config_schema": {
+        "timeout":               {"type": "integer", "default": 25},
+        "scan_resources":        {"type": "boolean", "default": true},
+        "scan_tool_responses":   {"type": "boolean", "default": true},
+        "max_tools":             {"type": "integer", "default": 20}
+      },
+      "default_config": {"timeout": 25, "scan_resources": true, "scan_tool_responses": true, "max_tools": 20},
+      "tags": ["mcp","credentials","dlp","client_side"]
+    },
+    {
+      "file": "vulnerable_client.py",
+      "name": "Vulnerable Client",
+      "subcategory": "Client-Side Attacks",
+      "severity": "high",
+      "attack_type": "reconnaissance",
+      "description": "Probes MCP server version-handling: accepts obsolete protocolVersion? leaks client-upgrade warnings?",
+      "config_schema": {
+        "timeout": {"type": "integer", "default": 15}
+      },
+      "default_config": {"timeout": 15},
+      "tags": ["mcp","version","client_side"]
+    },
+    {
+      "file": "configuration_drift.py",
+      "name": "Configuration Drift",
+      "subcategory": "Server-Side Attacks",
+      "severity": "high",
+      "attack_type": "reconnaissance",
+      "description": "Samples server capabilities / tool list / resource list N times and flags drift between snapshots — inconsistent backend replicas or active tampering.",
+      "config_schema": {
+        "timeout":         {"type": "integer", "default": 15},
+        "samples":         {"type": "integer", "default": 4,  "description": "How many snapshots to compare"},
+        "delay_seconds":   {"type": "number",  "default": 0.5}
+      },
+      "default_config": {"timeout": 15, "samples": 4, "delay_seconds": 0.5},
+      "tags": ["mcp","config","drift","server_side"]
+    },
+    {
+      "file": "file_based_injection_addition.py",
+      "name": "File-Based Injection (Addition)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "critical",
+      "attack_type": "injection",
+      "description": "Detects arbitrary file-write tools. Writes a canary file at a configurable path, reads it back, confirms round-trip.",
+      "config_schema": {
+        "timeout":           {"type": "integer", "default": 20},
+        "sandbox_path":      {"type": "string",  "default": "/tmp",          "description": "Directory to write canary files (use forward-slash; /tmp works on Linux/Mac; set to 'C:/Windows/Temp' for Windows MCPs)"},
+        "max_write_tools":   {"type": "integer", "default": 5},
+        "only_tool_names":   {"type": "array",   "default": []}
+      },
+      "default_config": {"timeout": 20, "sandbox_path": "/tmp", "max_write_tools": 5, "only_tool_names": []},
+      "tags": ["mcp","file_write","server_side"]
+    },
+    {
+      "file": "file_based_injection_deletion.py",
+      "name": "File-Based Injection (Deletion)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "critical",
+      "attack_type": "exploitation",
+      "description": "Tests for file-delete primitive by attempting to delete a non-existent file and checking whether the server distinguishes 'not found' (bad) from 'forbidden' (good).",
+      "config_schema": {
+        "timeout":           {"type": "integer", "default": 15},
+        "sandbox_path":      {"type": "string",  "default": "/tmp"},
+        "only_tool_names":   {"type": "array",   "default": []}
+      },
+      "default_config": {"timeout": 15, "sandbox_path": "/tmp", "only_tool_names": []},
+      "tags": ["mcp","file_delete","server_side"]
+    },
+    {
+      "file": "file_based_injection_modification.py",
+      "name": "File-Based Injection (Modification)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "critical",
+      "attack_type": "injection",
+      "description": "Confirms file-overwrite semantics: writes v1, writes v2, reads back and checks the newer version won.",
+      "config_schema": {
+        "timeout":           {"type": "integer", "default": 20},
+        "sandbox_path":      {"type": "string",  "default": "/tmp"},
+        "only_tool_names":   {"type": "array",   "default": []}
+      },
+      "default_config": {"timeout": 20, "sandbox_path": "/tmp", "only_tool_names": []},
+      "tags": ["mcp","file_overwrite","server_side"]
+    },
+    {
+      "file": "file_based_injection_retrieval.py",
+      "name": "File-Based Injection (Retrieval)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "critical",
+      "attack_type": "bypass",
+      "description": "Probes directory-listing tools with common Linux/Windows paths + wildcards. Flags tools that enumerate the real filesystem.",
+      "config_schema": {
+        "timeout":           {"type": "integer", "default": 20},
+        "probe_paths":       {"type": "array",   "default": ["/", "/etc", "C:\\", "*", ".", ".."], "description": "Paths to probe"},
+        "only_tool_names":   {"type": "array",   "default": []}
+      },
+      "default_config": {"timeout": 20, "probe_paths": ["/", "/etc", "C:\\", "*", ".", ".."], "only_tool_names": []},
+      "tags": ["mcp","directory_enum","server_side"]
+    },
+    {
+      "file": "mcp_server_backdoor_discovery.py",
+      "name": "MCP Server Backdoor Discovery",
+      "subcategory": "Server-Side Attacks",
+      "severity": "critical",
+      "attack_type": "reconnaissance",
+      "description": "Enumerates tools for backdoor-like names/descriptions (admin, debug, wipe, raw-exec, bypass, impersonate) — exposed operator-grade capabilities. Supports org-specific custom patterns.",
+      "config_schema": {
+        "timeout":          {"type": "integer", "default": 15},
+        "extra_patterns":   {"type": "array",   "default": [], "description": "Additional regex patterns, e.g. [[\"ops_\\\\w+\", \"ops tool\"], \"internal_.*\"]"},
+        "exclude_tools":    {"type": "array",   "default": [], "description": "Tool names to skip"}
+      },
+      "default_config": {"timeout": 15, "extra_patterns": [], "exclude_tools": []},
+      "tags": ["mcp","backdoor","admin","server_side"]
+    },
+    {
+      "file": "package_name_squatting.py",
+      "name": "Package Name Squatting",
+      "subcategory": "Server-Side Attacks",
+      "severity": "high",
+      "attack_type": "exploitation",
+      "description": "Checks server-reported serverInfo.name against a known-good list using string similarity — flags near-match typosquatting.",
+      "config_schema": {
+        "timeout":                 {"type": "integer", "default": 15},
+        "min_similarity":          {"type": "number",  "default": 0.75, "description": "Ratio above which names are considered suspicious"},
+        "extra_known_packages":    {"type": "array",   "default": [], "description": "Additional legitimate packages to include in the corpus"}
+      },
+      "default_config": {"timeout": 15, "min_similarity": 0.75, "extra_known_packages": []},
+      "tags": ["mcp","typosquat","supply_chain","server_side"]
+    },
+    {
+      "file": "remote_code_execution.py",
+      "name": "Remote Code Execution (eval fuzz)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "critical",
+      "attack_type": "injection",
+      "description": "Non-OOB variant: sends arithmetic expressions in Python/Node/Ruby/PHP and scans response for known output markers. Faster than the Pro RCE but lower confidence.",
+      "config_schema": {
+        "timeout":            {"type": "integer", "default": 20},
+        "max_tools":          {"type": "integer", "default": 6},
+        "only_tool_names":    {"type": "array",   "default": []}
+      },
+      "default_config": {"timeout": 20, "max_tools": 6, "only_tool_names": []},
+      "tags": ["mcp","rce","eval","server_side"]
+    },
+    {
+      "file": "sql_injection.py",
+      "name": "SQL Injection (error-based)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "critical",
+      "attack_type": "injection",
+      "description": "Pure error-based SQLi fuzz with 11 error-triggering payloads and 30+ DB error markers (sqlite, mysql, postgres, mssql, oracle, odbc). Faster than the layered Pro variant.",
+      "config_schema": {
+        "timeout":          {"type": "integer", "default": 20},
+        "max_tools":        {"type": "integer", "default": 8},
+        "only_tool_names":  {"type": "array",   "default": []}
+      },
+      "default_config": {"timeout": 20, "max_tools": 8, "only_tool_names": []},
+      "tags": ["mcp","sqli","error_based","server_side"]
+    },
+    {
+      "file": "server_code_leakage.py",
+      "name": "Server Code Leakage",
+      "subcategory": "Server-Side Attacks",
+      "severity": "high",
+      "attack_type": "extraction",
+      "description": "Triggers a malformed JSON-RPC call and scans error responses + tool responses for source-code fragments (Python def, JS function, PHP tags, stack-frame paths).",
+      "config_schema": {
+        "timeout":               {"type": "integer", "default": 20},
+        "probe_tool_responses":  {"type": "boolean", "default": true},
+        "max_tools":             {"type": "integer", "default": 12}
+      },
+      "default_config": {"timeout": 20, "probe_tool_responses": true, "max_tools": 12},
+      "tags": ["mcp","source_leak","server_side"]
+    },
+    {
+      "file": "mcp_man_in_the_middle.py",
+      "name": "MCP Man In The Middle",
+      "subcategory": "Data-in-Transit Attacks",
+      "severity": "critical",
+      "attack_type": "exfiltration",
+      "description": "ACTIVE variant: spawns Minerva's mitm_proxy in front of the target, captures MCP flows, audits them for auth leakage + credential bodies.",
+      "config_schema": {
+        "timeout":          {"type": "integer", "default": 20},
+        "capture_seconds":  {"type": "integer", "default": 10, "description": "How long to leave the proxy running"}
+      },
+      "default_config": {"timeout": 20, "capture_seconds": 10},
+      "tags": ["mcp","mitm","active_proxy","transit"]
+    },
+    {
+      "file": "mcp_tool_rebinding.py",
+      "name": "MCP Tool Rebinding (race)",
+      "subcategory": "Data-in-Transit Attacks",
+      "severity": "critical",
+      "attack_type": "manipulation",
+      "description": "Functional TOCTOU race: hammers tools/list in a background thread while exercising tools. Fingerprint-over-time uniqueness proves runtime-vs-audit divergence.",
+      "config_schema": {
+        "timeout":        {"type": "integer", "default": 20},
+        "race_seconds":   {"type": "integer", "default": 4}
+      },
+      "default_config": {"timeout": 20, "race_seconds": 4},
+      "tags": ["mcp","toctou","race","transit"]
+    },
+    {
+      "file": "command_injection.py",
+      "name": "Command Injection (metacharacter fuzz)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "critical",
+      "attack_type": "injection",
+      "description": "Response-echo variant: sends classic metacharacter payloads and scans for shell-output markers (uid=, root:, Windows markers). No OOB/timing — fast and loud.",
+      "config_schema": {
+        "timeout":         {"type": "integer", "default": 20},
+        "max_tools":       {"type": "integer", "default": 10},
+        "only_tool_names": {"type": "array",   "default": []}
+      },
+      "default_config": {"timeout": 20, "max_tools": 10, "only_tool_names": []},
+      "tags": ["mcp","command_injection","echo","server_side"]
+    }
+  ]
+}
