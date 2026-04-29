@@ -140,6 +140,24 @@ class AttackExecutor:
                               key=lambda s: sev_order.get(str(s).lower(), -1))
                     execution.severity_found = top
 
+                try:
+                    from app.services import notifier as _notifier
+                    target_dict = {
+                        'host': target.host,
+                        'port': target.port,
+                        'base_url': target.base_url,
+                    }
+                    campaign_name = None
+                    if execution.campaign_id:
+                        from app.models.models import Campaign as _Campaign
+                        _camp = _Campaign.query.get(execution.campaign_id)
+                        campaign_name = _camp.name if _camp else None
+                    for _f in findings:
+                        _notifier.notify_finding(_f, target=target_dict,
+                                                 campaign_name=campaign_name)
+                except Exception:
+                    pass
+
             except Exception as e:
                 execution.status = 'error'
                 execution.error_message = str(e)
@@ -150,6 +168,12 @@ class AttackExecutor:
                         (execution.completed_at - execution.started_at).total_seconds()
                     )
                 db.session.commit()
+                if execution.campaign_id:
+                    try:
+                        from app.api.executions import update_campaign_progress
+                        update_campaign_progress(execution.campaign_id)
+                    except Exception:
+                        pass
     
     def _build_execution_env(self, target, config):
         """Build environment variables for script execution"""

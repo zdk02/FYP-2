@@ -31,7 +31,7 @@ export default function AdminPayloads() {
   const [form, setForm] = useState({
     name: '',
     description: '',
-    payload_type: 'injection',
+    payload_type: 'custom',
     content: '',
     variables: [],
   })
@@ -73,7 +73,7 @@ export default function AdminPayloads() {
 
   const openCreate = () => {
     setEditingPayload(null)
-    setForm({ name: '', description: '', payload_type: 'injection', content: '', variables: [] })
+    setForm({ name: '', description: '', payload_type: 'custom', content: '', variables: [] })
     setShowModal(true)
   }
 
@@ -92,7 +92,7 @@ export default function AdminPayloads() {
   const closeModal = () => {
     setShowModal(false)
     setEditingPayload(null)
-    setForm({ name: '', description: '', payload_type: 'injection', content: '', variables: [] })
+    setForm({ name: '', description: '', payload_type: 'custom', content: '', variables: [] })
   }
 
   const handleSubmit = (e) => {
@@ -113,7 +113,10 @@ export default function AdminPayloads() {
     const matchesSearch = 
       payload.name.toLowerCase().includes(search.toLowerCase()) ||
       payload.content.toLowerCase().includes(search.toLowerCase())
-    const matchesType = !typeFilter || payload.payload_type === typeFilter
+    const knownTypes = new Set(payloadTypes.filter(t => t.id !== 'custom').map(t => t.id))
+    const matchesType = !typeFilter
+      || payload.payload_type === typeFilter
+      || (typeFilter === 'custom' && (!payload.payload_type || !knownTypes.has(payload.payload_type)))
     return matchesSearch && matchesType
   }) || []
 

@@ -13,6 +13,20 @@ credentials. The attack compares the authenticated behaviour to the
 unauthenticated / malformed-auth behaviour.
 """
 
+import json as _json
+
+
+def _normalize_auth(raw):
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, str) and raw.strip():
+        try:
+            parsed = _json.loads(raw)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
 
 def execute(target, params, context):
     rb = evidence.ReportBuilder(
@@ -22,7 +36,7 @@ def execute(target, params, context):
     timeout = int(params.get("timeout", 20))
     test_tool_call = bool(params.get("test_tool_call", True))
 
-    legit_auth = target.get("auth_config") or {}
+    legit_auth = _normalize_auth(target.get("auth_config"))
     if not legit_auth or legit_auth.get("type") in ("", "none"):
         rb.warn("Target has no auth_config — running as a bare reachability test.")
 

@@ -94,7 +94,9 @@ export default function AttackDetail() {
     mutationFn: (body) => attacksApi.test(attack.id, body),
     onSuccess: (data) => {
       setRunResult(data)
-      toast.success('Attack execution finished')
+      const n = Array.isArray(data?.findings) ? data.findings.length : 0
+      if (n > 0) toast.success(`Attack finished — ${n} vulnerabilit${n === 1 ? 'y' : 'ies'} found`)
+      else toast.success('Attack finished — no vulnerabilities detected')
     },
     onError: (error) => {
       const msg = error.response?.data?.error || error.message || 'Attack failed'
@@ -430,18 +432,32 @@ export default function AttackDetail() {
                 </div>
               )}
 
-              {runResult && (
-                <div className={`p-4 rounded-lg border ${
-                  runResult.status === 'success' || runResult.status === 'completed' || runResult.status === 'validated'
+              {runResult && (() => {
+                const findingsCount = Array.isArray(runResult.findings) ? runResult.findings.length : 0
+                const isError = runResult.status === 'error' || runResult.status === 'failed'
+                const ranOk = runResult.status === 'success' || runResult.status === 'completed' || runResult.status === 'validated'
+                const hasFindings = ranOk && findingsCount > 0
+                const cleanNoFindings = ranOk && findingsCount === 0 && runResult.status !== 'validated'
+                const boxClass = isError
+                  ? 'border-red-500 bg-red-500/10'
+                  : hasFindings
                     ? 'border-emerald-500 bg-emerald-500/10'
-                    : runResult.status === 'error' || runResult.status === 'failed'
-                      ? 'border-red-500 bg-red-500/10'
+                    : cleanNoFindings
+                      ? 'border-blue-500 bg-blue-500/10'
                       : 'border-yellow-500 bg-yellow-500/10'
-                }`}>
+                const label = isError
+                  ? 'ERROR'
+                  : hasFindings
+                    ? `VULNERABILITIES FOUND (${findingsCount})`
+                    : cleanNoFindings
+                      ? 'NO VULNERABILITIES DETECTED'
+                      : (runResult.status || 'finished').toString().toUpperCase()
+                return (
+                <div className={`p-4 rounded-lg border ${boxClass}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <Shield className="w-4 h-4 text-white" />
                     <span className="text-sm font-medium text-white">
-                      {(runResult.status || 'finished').toString().toUpperCase()}
+                      {label}
                     </span>
                   </div>
                   {runResult.message && (
@@ -470,7 +486,8 @@ export default function AttackDetail() {
                     </pre>
                   )}
                 </div>
-              )}
+                )
+              })()}
             </div>
 
             <div className="p-6 border-t border-dark-700 flex items-center justify-end gap-2">

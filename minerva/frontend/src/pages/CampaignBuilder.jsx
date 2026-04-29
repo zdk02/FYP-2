@@ -10,7 +10,7 @@ import {
   Settings,
   Rocket,
 } from 'lucide-react'
-import { campaignsApi, targetsApi, categoriesApi } from '../services/api'
+import { campaignsApi, targetsApi, categoriesApi, attacksApi } from '../services/api'
 import toast from 'react-hot-toast'
 
 const steps = [
@@ -55,6 +55,12 @@ export default function CampaignBuilder() {
     queryFn: () => categoriesApi.getAll(true),
   })
 
+  // Fetch flat attacks list (fallback when categorisation is empty / partial)
+  const { data: attacksData } = useQuery({
+    queryKey: ['attacks-flat'],
+    queryFn: () => attacksApi.getAll({ limit: 200 }),
+  })
+
   const createMutation = useMutation({
     mutationFn: (data) => campaignsApi.create(data),
     onSuccess: (res) => {
@@ -66,6 +72,10 @@ export default function CampaignBuilder() {
 
   const targets = targetsData?.targets || []
   const categories = Array.isArray(categoriesData) ? categoriesData : []
+  const allAttacks = Array.isArray(attacksData?.attacks)
+    ? attacksData.attacks
+    : (Array.isArray(attacksData) ? attacksData : [])
+  const activeAttacks = allAttacks.filter(a => a.is_active !== false)
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -266,50 +276,69 @@ export default function CampaignBuilder() {
 
           {currentStep === 2 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-white">Select Attacks</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Select Attacks</h2>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({
+                      ...formData,
+                      attack_ids: activeAttacks.map(a => a.id),
+                    })}
+                    className="px-3 py-1 text-xs rounded border border-dark-600 text-white hover:border-aegis-500"
+                  >
+                    Select All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, attack_ids: [] })}
+                    className="px-3 py-1 text-xs rounded border border-dark-600 text-white hover:border-aegis-500"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
               <p className="text-sm text-dark-400">
-                Selected: {formData.attack_ids.length} attacks
+                Selected: {formData.attack_ids.length} of {activeAttacks.length} attacks
               </p>
-              
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {categories.map((category) => (
-                  <div key={category.id}>
-                    <h3 className="text-sm font-medium text-dark-300 mb-2">{category.name}</h3>
-                    {category.subcategories?.map((sub) => (
-                      <div key={sub.id} className="ml-4 mb-2">
-                        <p className="text-xs text-dark-500 mb-1">{sub.name}</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          {sub.attacks?.map((attack) => (
-                            <button
-                              key={attack.id}
-                              onClick={() => toggleAttack(attack.id)}
-                              className={`p-2 rounded border text-left text-sm transition-all ${
-                                formData.attack_ids.includes(attack.id)
-                                  ? 'border-aegis-500 bg-aegis-600/10'
-                                  : 'border-dark-700 bg-dark-800 hover:border-dark-600'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <div className={`w-3 h-3 rounded border flex items-center justify-center ${
-                                  formData.attack_ids.includes(attack.id)
-                                    ? 'border-aegis-500 bg-aegis-500'
-                                    : 'border-dark-600'
-                                }`}>
-                                  {formData.attack_ids.includes(attack.id) && (
-                                    <Check className="w-2 h-2 text-white" />
-                                  )}
-                                </div>
-                                <span className="text-white truncate">{attack.name}</span>
-                              </div>
-                            </button>
-                          )) || (
-                            <p className="text-xs text-dark-600 col-span-2">No attacks in this category</p>
-                          )}
-                        </div>
+
+              <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+                {activeAttacks.map((attack) => (
+                  <button
+                    key={attack.id}
+                    type="button"
+                    onClick={() => toggleAttack(attack.id)}
+                    className={`p-3 rounded-lg border text-left transition-all ${
+                      formData.attack_ids.includes(attack.id)
+                        ? 'border-aegis-500 bg-aegis-600/10'
+                        : 'border-dark-700 bg-dark-800 hover:border-dark-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                        formData.attack_ids.includes(attack.id)
+                          ? 'border-aegis-500 bg-aegis-500'
+                          : 'border-dark-600'
+                      }`}>
+                        {formData.attack_ids.includes(attack.id) && (
+                          <Check className="w-3 h-3 text-white" />
+                        )}
                       </div>
-                    ))}
-                  </div>
+                      <span className="font-medium text-white truncate">{attack.name}</span>
+                    </div>
+                    {attack.severity && (
+                      <p className="text-xs text-dark-500 mt-1 ml-6 capitalize">
+                        {attack.severity}
+                        {attack.category ? ` · ${attack.category}` : ''}
+                      </p>
+                    )}
+                  </button>
                 ))}
+                {activeAttacks.length === 0 && (
+                  <p className="text-xs text-dark-500 col-span-2">
+                    No attacks loaded. Run <code>python -m scripts.seed_pro_attacks</code> in the backend.
+                  </p>
+                )}
               </div>
             </div>
           )}

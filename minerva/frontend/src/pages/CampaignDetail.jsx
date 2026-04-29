@@ -23,7 +23,10 @@ const statusColors = {
   pending: 'text-dark-400',
   running: 'text-yellow-400',
   completed: 'text-emerald-400',
+  success: 'text-emerald-400',
   failed: 'text-red-400',
+  error: 'text-red-400',
+  cancelled: 'text-dark-500',
   skipped: 'text-dark-500',
 }
 
@@ -272,10 +275,10 @@ export default function CampaignDetail() {
                     <td className="font-medium text-white">{exec.attack?.name}</td>
                     <td className="text-dark-300">{exec.target?.name}</td>
                     <td>
-                      <span className={`flex items-center gap-1 ${statusColors[exec.status]}`}>
-                        {exec.status === 'completed' ? (
+                      <span className={`flex items-center gap-1 ${statusColors[exec.status] || ''}`}>
+                        {['completed', 'success'].includes(exec.status) ? (
                           <CheckCircle className="w-3 h-3" />
-                        ) : exec.status === 'failed' ? (
+                        ) : ['failed', 'error', 'cancelled'].includes(exec.status) ? (
                           <XCircle className="w-3 h-3" />
                         ) : exec.status === 'running' ? (
                           <Activity className="w-3 h-3 animate-pulse" />

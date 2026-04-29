@@ -438,7 +438,7 @@ def update_campaign_progress(campaign_id):
     total = AttackExecution.query.filter_by(campaign_id=campaign_id).count()
     completed = AttackExecution.query.filter(
         AttackExecution.campaign_id == campaign_id,
-        AttackExecution.status.in_(['completed', 'error', 'cancelled'])
+        AttackExecution.status.in_(['completed', 'success', 'failed', 'error', 'cancelled'])
     ).count()
     
     if total > 0:

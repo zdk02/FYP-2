@@ -114,8 +114,11 @@ def get_campaigns():
             campaign_id=c.id, result='vulnerable'
         ).count()
         findings_count = success_count
-        completed = AttackExecution.query.filter_by(
-            campaign_id=c.id, status='completed'
+        completed = AttackExecution.query.filter(
+            AttackExecution.campaign_id == c.id,
+            AttackExecution.status.in_(
+                ('completed', 'success', 'failed', 'error', 'cancelled')
+            ),
         ).count()
 
         campaigns.append({
@@ -149,7 +152,8 @@ def get_campaign(campaign_id):
         'error': sum(1 for e in executions if e.result == 'error'),
         'pending': sum(1 for e in executions if e.status == 'pending'),
         'running': sum(1 for e in executions if e.status == 'running'),
-        'completed': sum(1 for e in executions if e.status == 'completed'),
+        'completed': sum(1 for e in executions
+                         if e.status in ('completed', 'success', 'failed', 'error', 'cancelled')),
     }
 
     payload = _serialize_campaign(campaign, with_relations=True, stats=stats)
@@ -319,8 +323,10 @@ def start_campaign(campaign_id):
     if campaign.mode == 'automated':
         try:
             from app.services.attack_service import AttackExecutor
+            from app.api.executions import update_campaign_progress
             executor = AttackExecutor()
             executor.execute_campaign(campaign_id, user_id, 'sequential')
+            update_campaign_progress(campaign_id)
         except Exception as e:
             return jsonify({
                 'message': 'Campaign started but background execution failed to launch',

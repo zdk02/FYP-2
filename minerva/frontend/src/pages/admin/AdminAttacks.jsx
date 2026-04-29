@@ -1400,27 +1400,41 @@ export default function AdminAttacks() {
                     <Terminal className="w-4 h-4" />
                     Test Result
                   </h3>
-                  <div className={`p-4 rounded-lg border ${
-                    testResult.status === 'success' || testResult.status === 'validated'
-                      ? 'bg-emerald-500/10 border-emerald-500/30'
-                      : testResult.status === 'completed'
-                      ? 'bg-blue-500/10 border-blue-500/30'
-                      : testResult.status === 'error'
+                  {(() => {
+                    const findingsCount = Array.isArray(testResult.findings) ? testResult.findings.length : 0
+                    const ranOk = testResult.status === 'success' || testResult.status === 'completed'
+                    const isError = testResult.status === 'error' || testResult.status === 'failed'
+                    const isValidated = testResult.status === 'validated'
+                    const hasFindings = ranOk && findingsCount > 0
+                    const cleanNoFindings = ranOk && findingsCount === 0
+                    const boxClass = isError
                       ? 'bg-red-500/10 border-red-500/30'
-                      : 'bg-yellow-500/10 border-yellow-500/30'
-                  }`}>
+                      : hasFindings
+                        ? 'bg-emerald-500/10 border-emerald-500/30'
+                        : cleanNoFindings || isValidated
+                          ? 'bg-blue-500/10 border-blue-500/30'
+                          : 'bg-yellow-500/10 border-yellow-500/30'
+                    const textClass = isError
+                      ? 'text-red-400'
+                      : hasFindings
+                        ? 'text-emerald-400'
+                        : cleanNoFindings || isValidated
+                          ? 'text-blue-400'
+                          : 'text-yellow-400'
+                    const label = isError
+                      ? '✗ Error'
+                      : hasFindings
+                        ? `✓ Vulnerabilities Found (${findingsCount})`
+                        : cleanNoFindings
+                          ? '✓ No Vulnerabilities Detected'
+                          : isValidated
+                            ? '✓ Configuration Valid'
+                            : '⏳ Pending'
+                    return (
+                  <div className={`p-4 rounded-lg border ${boxClass}`}>
                     <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-sm font-medium ${
-                        testResult.status === 'success' ? 'text-emerald-400' :
-                        testResult.status === 'validated' ? 'text-emerald-400' :
-                        testResult.status === 'completed' ? 'text-blue-400' :
-                        testResult.status === 'error' ? 'text-red-400' :
-                        'text-yellow-400'
-                      }`}>
-                        {testResult.status === 'success' ? '✓ Attack Successful' : 
-                         testResult.status === 'validated' ? '✓ Configuration Valid' :
-                         testResult.status === 'completed' ? '✓ Attack Completed' :
-                         testResult.status === 'error' ? '✗ Error' : '⏳ Pending'}
+                      <span className={`text-sm font-medium ${textClass}`}>
+                        {label}
                       </span>
                     </div>
                     <p className="text-sm text-dark-300 mb-3">{testResult.message}</p>
@@ -1493,6 +1507,8 @@ export default function AdminAttacks() {
                       <strong>Parameters:</strong> {JSON.stringify(testResult.parameters_used)}
                     </div>
                   </div>
+                    )
+                  })()}
                 </div>
               )}
             </div>

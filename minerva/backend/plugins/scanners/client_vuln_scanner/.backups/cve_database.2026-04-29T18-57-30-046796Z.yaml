@@ -62,13 +62,11 @@ clients:
     - id: CVE-2025-64755
       title: Sed Command Validation Bypass — Arbitrary File Writes
       severity: high
-      cvss: 8.2
+      cvss: 8.1
       cvss_vector: CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N
       cwe: CWE-78
       affected_versions: < 2.0.31
       fixed_version: 2.0.31
-      disclosure_date: '2025-11-20'
-      reported_by: Adam Chester — SpecterOps
       description: 'Error in sed command parsing allows bypass of read-only validation to write arbitrary files on the host via the sed ''e'' modifier.
 
         '
@@ -78,16 +76,18 @@ clients:
       remediation: Update to Claude Code >= 2.0.31
       references:
       - https://github.com/anthropics/claude-code/security/advisories/GHSA-7mv8-j34q-vp7q
+      reported_by: Adam Chester — SpecterOps
+      disclosure_date: '2025-11-20'
       env_checks:
-      - cmd: which sed
-        description: sed is available on system (required for exploitation)
+      - type: command_output
+        cmd: which sed
         expect_pattern: /sed
-        type: command_output
+        description: sed is available on system (required for exploitation)
       active_checks:
-      - description: npm package version is below fix
+      - type: npm_installed
         package: '@anthropic-ai/claude-code'
-        type: npm_installed
         vulnerable_below: 2.0.31
+        description: npm package version is below fix
     - id: CVE-2026-25723
       title: Piped sed Command Injection — File Write Restriction Bypass
       severity: high

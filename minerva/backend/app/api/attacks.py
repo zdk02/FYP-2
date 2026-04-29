@@ -495,6 +495,13 @@ def test_attack(attack_id):
             result['message'] = (
                 f"Attack completed — {len(result['findings'])} finding(s)"
             )
+
+            try:
+                from app.services import notifier as _notifier
+                for _f in result['findings']:
+                    _notifier.notify_finding(_f, target=target_config)
+            except Exception:
+                pass
     
     # Audit log
     current_user_id = get_jwt_identity()
