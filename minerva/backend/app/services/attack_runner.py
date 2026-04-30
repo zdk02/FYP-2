@@ -44,6 +44,8 @@ def build_exec_globals(*, extra: dict | None = None) -> dict:
     from app.services import reverse_shell as _reverse_shell
     from app.services import mitm_proxy as _mitm_proxy
     from app.services import attack_helpers as _attack_helpers
+    from app.services import cloud_metadata as _cloud_metadata
+    from app.services import secret_validators as _secret_validators
 
     g = {
         "__builtins__": __builtins__,
@@ -60,6 +62,8 @@ def build_exec_globals(*, extra: dict | None = None) -> dict:
         "reverse_shell": _reverse_shell,
         "mitm_proxy": _mitm_proxy,
         "helpers": _attack_helpers,
+        "cloud_metadata": _cloud_metadata,
+        "secret_validators": _secret_validators,
     }
     if extra:
         g.update(extra)

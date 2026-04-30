@@ -79,10 +79,15 @@ def _readme_text(pdir):
 
 
 def _stats(db):
-    clients = (db or {}).get('clients') or {}
-    client_count = len(clients)
-    cve_count = sum(len(c.get('cves') or []) for c in clients.values())
-    return client_count, cve_count
+    """Count entries + CVEs across both `clients` (client scanner) and
+    `servers` (server scanner) shapes — keeps the registry shape-agnostic."""
+    db = db or {}
+    entries = {}
+    entries.update(db.get('clients') or {})
+    entries.update(db.get('servers') or {})
+    entry_count = len(entries)
+    cve_count = sum(len(c.get('cves') or []) for c in entries.values())
+    return entry_count, cve_count
 
 
 def _summary(plugin_id, pdir, manifest, db_path, db):

@@ -70,8 +70,16 @@ def execute(target, params, context):
     timeout = int(params.get("timeout", 30))
     oob_wait = int(params.get("oob_wait_seconds", 20))
     only_tool_names = params.get("only_tool_names") or []
+    formats = params.get("formats") or ["pickle", "yaml", "java", "dotnet"]
+    tool_keywords = params.get("tool_keywords") or []
+    protocol_version = params.get("protocol_version") or None
+    transport_override = params.get("transport_override") or None
 
-    mcp = mcp_client.MCPClient.from_target(target, timeout=timeout)
+    mcp = mcp_client.MCPClient.from_target(
+        target, timeout=timeout,
+        protocol_version=protocol_version,
+        force_transport=transport_override,
+    )
     try:
         disc = mcp.discover()
         if not disc["initialized"]:
@@ -88,7 +96,7 @@ def execute(target, params, context):
                 init_resp, note="failed initialize"))
             return rb.finalize(success=False)
         tools = disc.get("tools") or []
-        cands = _pick(tools, only_tool_names)
+        cands = _pick(tools, only_tool_names, tool_keywords)
         if not cands:
             rb.warn("No deserialization-surface tools matched.")
             return rb.finalize(success=True)
@@ -102,6 +110,33 @@ def execute(target, params, context):
             if not str_params:
                 continue
             for pname in str_params:
+                # --- Java magic-byte detection (passive) ---
+                if "java" in formats:
+                    java_marker = "\xac\xed\x00\x05"
+                    args_j = helpers.fill_defaults(schema)
+                    args_j[pname] = java_marker
+                    rj = mcp.call_tool_safe(tname, args_j)
+                    rb.add_evidence(evidence.ev_mcp_call(
+                        rj, note=f"java preamble {tname}/{pname}"))
+                    text_j = (rj.get("text_output") or "").lower()
+                    if "objectinputstream" in text_j or "serialversion" in text_j:
+                        rb.add_finding(evidence.Finding(
+                            attack_id=context.get("attack_id", "insecure_deserialization"),
+                            title=f"Java ObjectInputStream sink suspected on '{tname}/{pname}'",
+                            category="insecure_deserialization",
+                            severity="high", confidence="high", cwe="CWE-502",
+                            tool=tname, parameter=pname, payload=java_marker,
+                            description=("Java serialization magic bytes "
+                                         "(AC ED 00 05) caused server output "
+                                         "mentioning ObjectInputStream — likely "
+                                         "vulnerable to ysoserial chains."),
+                            remediation=("Replace ObjectInputStream with safe "
+                                         "alternatives (Jackson, ProtoBuf). Use "
+                                         "look-ahead deserialization filters."),
+                        ))
+
+                if "pickle" not in formats:
+                    continue
                 # --- 1. Pickle canary ---
                 canary = "DESER_" + context.get("attack_id", "x")[:8]
                 payload_b64 = _pickle_b64(_CanaryTrigger(canary))
@@ -123,6 +158,8 @@ def execute(target, params, context):
                     ))
                     break
 
+                if "yaml" not in formats:
+                    continue
                 # --- 2. YAML canary ---
                 yaml_canary = "YAML_" + context.get("attack_id", "x")[:8]
                 yaml_doc = _YAML_CANARY_TEMPLATE.format(canary=yaml_canary)
@@ -193,10 +230,10 @@ def execute(target, params, context):
         mcp.close()
 
 
-def _pick(tools, force):
+def _pick(tools, force, kw_override=None):
     if force:
         return [t for t in tools if t.get("name") in set(force)]
-    kws = ("load", "deserialize", "deserialise", "pickle", "parse",
+    kws = kw_override or ("load", "deserialize", "deserialise", "pickle", "parse",
            "import_", "restore", "unmarshal", "yaml", "config")
     out = [t for t in tools
            if any(k in f"{t.get('name','')} {t.get('description','')}".lower()

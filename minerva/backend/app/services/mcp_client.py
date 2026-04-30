@@ -604,19 +604,28 @@ class MCPClient:
         self.capabilities: dict = {}
         self.protocol_version: str | None = None
         self._last_error: str | None = None
+        # Optional negotiated default — set by from_target() when caller
+        # passed protocol_version=...
+        self._preferred_protocol_version: str | None = None
 
     # Construction -----------------------------------------------------------
     @classmethod
     def from_target(cls, target: dict, *, auth_config: dict | None = None,
                     timeout: int = 30, force_transport: str | None = None,
-                    verify_tls: bool | None = None) -> "MCPClient":
+                    verify_tls: bool | None = None,
+                    protocol_version: str | None = None,
+                    extra_headers: dict | None = None) -> "MCPClient":
         """Build a client from a Target dict. Auto-detects transport
         unless ``force_transport`` is given.
 
         ``target`` may contain::
 
             {"host", "port", "protocol", "base_url", "transport",
-             "path", "command", "auth_config", "verify_tls"}
+             "path", "command", "auth_config", "verify_tls",
+             "protocol_version", "extra_headers"}
+
+        ``protocol_version`` overrides the default for ``initialize()``.
+        Pass an empty string to keep auto (server picks).
         """
         target = target or {}
         auth = auth_config or target.get("auth_config") or {}
@@ -657,11 +666,16 @@ class MCPClient:
                 base_url = f"{u.scheme}://{u.netloc}"
         base_url = base_url.rstrip("/")
 
+        # Resolve extra headers — caller > target hint > none
+        eh = dict(target.get("extra_headers") or {})
+        if extra_headers:
+            eh.update(extra_headers)
+
         # Pick transport
         if transport_hint == "stdio" or protocol == "stdio" or base_url.startswith("stdio:"):
             t = StdioTransport(base_url, command=target.get("command"),
                                auth_config=auth, timeout=timeout,
-                               verify_tls=verify)
+                               verify_tls=verify, extra_headers=eh)
         elif transport_hint in ("ws", "wss") or protocol in ("ws", "wss") \
                 or base_url.startswith(("ws://", "wss://")):
             # Normalise to http(s) base so WebSocketTransport can parse it
@@ -669,15 +683,25 @@ class MCPClient:
             scheme = "https" if u.scheme in ("wss", "https") else "http"
             norm = urlunparse((scheme, u.netloc, u.path, u.params, u.query, u.fragment))
             t = WebSocketTransport(norm, path=path, auth_config=auth,
-                                   timeout=timeout, verify_tls=verify)
+                                   timeout=timeout, verify_tls=verify,
+                                   extra_headers=eh)
         elif transport_hint == "sse" or path.endswith("/sse"):
             t = SSETransport(base_url, path=path, auth_config=auth,
-                             timeout=timeout, verify_tls=verify)
+                             timeout=timeout, verify_tls=verify,
+                             extra_headers=eh)
         else:
             t = HTTPTransport(base_url, path=path, auth_config=auth,
-                              timeout=timeout, verify_tls=verify)
+                              timeout=timeout, verify_tls=verify,
+                              extra_headers=eh)
 
-        return cls(t)
+        # Resolve negotiated protocol version: caller > target > module default
+        pv = (protocol_version
+              if protocol_version is not None
+              else target.get("protocol_version"))
+        client = cls(t)
+        if pv:
+            client._preferred_protocol_version = pv
+        return client
 
     # Lifecycle --------------------------------------------------------------
     def close(self) -> None:
@@ -701,7 +725,9 @@ class MCPClient:
             "roots": {"listChanged": True},
             "sampling": {},
         }
-        pv = protocol_version or _MCP_PROTOCOL_VERSION
+        pv = (protocol_version
+              or self._preferred_protocol_version
+              or _MCP_PROTOCOL_VERSION)
         resp = self.transport.send("initialize", {
             "protocolVersion": pv,
             "capabilities": caps,
@@ -905,9 +931,76 @@ def auto_detect_transport(target: dict, *, timeout: int = 5) -> str:
     return "http"
 
 
+# ---------------------------------------------------------------------------
+# Protocol-version negotiation
+# ---------------------------------------------------------------------------
+
+# Known MCP protocol versions, newest first. The downgrade-attack script
+# walks this list to find which the server accepts.
+KNOWN_PROTOCOL_VERSIONS = (
+    "2025-06-18",   # OAuth 2.1 mandate, elicitation/create, structured tool output
+    "2025-03-26",   # streamable HTTP, audio content, completions, tool annotations
+    "2024-11-05",   # initial public spec
+    "2024-10-07",   # pre-public draft (rare in the wild)
+    "0.1.0",        # very early SDK builds
+)
+
+
+def negotiate_protocol_version(target: dict, *,
+                               versions: list[str] | None = None,
+                               timeout: int = 15,
+                               force_transport: str | None = None,
+                               extra_headers: dict | None = None
+                               ) -> dict:
+    """Try every version in ``versions`` (or KNOWN_PROTOCOL_VERSIONS) and
+    record which the server accepts.
+
+    Returns::
+
+        {"accepted": [...], "rejected": [{version, status, error}], "raw": [...]}
+
+    The caller (e.g. protocol_version_downgrade attack) inspects this to
+    decide whether old/insecure protocol versions are still honoured.
+    """
+    versions = versions or list(KNOWN_PROTOCOL_VERSIONS)
+    accepted: list[str] = []
+    rejected: list[dict] = []
+    raw: list[dict] = []
+    for v in versions:
+        try:
+            mcp = MCPClient.from_target(
+                target, timeout=timeout,
+                force_transport=force_transport,
+                protocol_version=v,
+                extra_headers=extra_headers,
+            )
+        except Exception as e:
+            rejected.append({"version": v, "status": None,
+                             "error": f"client construction failed: {e!s:.200}"})
+            continue
+        try:
+            r = mcp.initialize(protocol_version=v)
+            raw.append({"version": v, "response": r})
+            if r.get("ok") and isinstance(r.get("result"), dict):
+                # Record what the server actually returned — may differ
+                returned = (r["result"] or {}).get("protocolVersion") or v
+                accepted.append(returned)
+            else:
+                rejected.append({"version": v,
+                                 "status": r.get("status"),
+                                 "error": str(r.get("error"))[:300]})
+        finally:
+            try:
+                mcp.close()
+            except Exception:
+                pass
+    return {"accepted": accepted, "rejected": rejected, "raw": raw}
+
+
 # Public surface
 __all__ = [
     "MCPClient",
     "HTTPTransport", "SSETransport", "WebSocketTransport", "StdioTransport",
     "apply_auth", "auto_detect_transport",
+    "KNOWN_PROTOCOL_VERSIONS", "negotiate_protocol_version",
 ]

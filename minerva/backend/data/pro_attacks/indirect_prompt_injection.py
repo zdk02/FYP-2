@@ -31,8 +31,16 @@ def execute(target, params, context):
     only_tool_names = params.get("only_tool_names") or []
     probe_resources = bool(params.get("probe_resources", True))
     probe_tool_echo = bool(params.get("probe_tool_echo", True))
+    probe_subscriptions = bool(params.get("probe_subscriptions", True))
+    probe_completion = bool(params.get("probe_completion", True))
+    protocol_version = params.get("protocol_version") or None
+    transport_override = params.get("transport_override") or None
 
-    mcp = mcp_client.MCPClient.from_target(target, timeout=timeout)
+    mcp = mcp_client.MCPClient.from_target(
+        target, timeout=timeout,
+        protocol_version=protocol_version,
+        force_transport=transport_override,
+    )
     try:
         disc = mcp.discover()
         if not disc["initialized"]:
@@ -140,10 +148,63 @@ def execute(target, params, context):
                     payload=f"canary={canary}",
                 ))
 
+        # 3) Probe completion/complete for template injection
+        if probe_completion:
+            for prompt in (disc.get("prompts") or [])[:max_tools]:
+                pname = prompt.get("name")
+                if not pname:
+                    continue
+                args_schema = prompt.get("arguments") or []
+                if not args_schema:
+                    continue
+                aname = args_schema[0].get("name")
+                if not aname:
+                    continue
+                canary = "MIN_IPI_C_" + _uuid.uuid4().hex[:8]
+                cr = mcp.completion_complete(
+                    {"type": "ref/prompt", "name": pname},
+                    {"name": aname,
+                     "value": f"PRINT-LITERALLY:{canary}"},
+                )
+                rb.add_evidence(evidence.ev_mcp_call(
+                    cr, note=f"completion/complete probe {pname}/{aname}"))
+                blob = _json.dumps(cr.get("result") or {})
+                if canary in blob:
+                    rb.add_finding(evidence.Finding(
+                        attack_id=context.get("attack_id", "indirect_prompt_injection"),
+                        title=f"completion/complete echoes attacker text: {pname}/{aname}",
+                        category="indirect_prompt_injection",
+                        severity="high", confidence="confirmed",
+                        cwe="CWE-77",
+                        tool=pname, parameter=aname,
+                        description=("Completion endpoint reflected our canary "
+                                     "verbatim. Suggestions are derived from "
+                                     "user input without sanitisation."),
+                        remediation=("Sanitise input before generating completions. "
+                                     "Treat completion suggestions as untrusted."),
+                        evidence=[evidence.ev_mcp_call(cr)],
+                    ))
+
+        # 4) Subscription poisoning probe
+        if probe_subscriptions:
+            for res in (disc.get("resources") or [])[:5]:
+                uri = res.get("uri")
+                if not uri:
+                    continue
+                sr = mcp.transport.send("resources/subscribe", {"uri": uri})
+                rb.add_evidence(evidence.ev_mcp_call(
+                    sr, note=f"resources/subscribe {uri}"))
+                # No active confirmation possible without listening for
+                # server-initiated notifications/resources/updated. Just
+                # records that the subscription endpoint exists; pentester
+                # can configure SSE to capture pushes manually.
+
         return rb.finalize()
     finally:
         mcp.close()
 
+
+import json as _json
 
 _INJECTION_PATTERNS = [
     r"(?i)ignore\s+(?:all\s+)?previous\s+instructions",

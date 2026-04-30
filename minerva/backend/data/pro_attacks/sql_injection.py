@@ -26,8 +26,16 @@ def execute(target, params, context):
     timing_tolerance = float(params.get("timing_tolerance", 2.0))
     max_tools = int(params.get("max_tools", 20))
     only_tool_names = params.get("only_tool_names") or []
+    dialects = params.get("dialects") or ["mysql", "postgres", "mssql", "oracle", "sqlite"]
+    waf_bypass = bool(params.get("waf_bypass", True))
+    protocol_version = params.get("protocol_version") or None
+    transport_override = params.get("transport_override") or None
 
-    mcp = mcp_client.MCPClient.from_target(target, timeout=timeout)
+    mcp = mcp_client.MCPClient.from_target(
+        target, timeout=timeout,
+        protocol_version=protocol_version,
+        force_transport=transport_override,
+    )
     try:
         disc = mcp.discover()
         if not disc["initialized"]:
@@ -108,8 +116,11 @@ def execute(target, params, context):
                             description="Responses to always-true vs always-false predicates "
                                         "differ in a way consistent with SQL injection."))
 
-                # --- Layer 3: time-based ---
-                for p in payloads.get("sql_injection:time") or []:
+                # --- Layer 3: time-based, scoped to selected dialects ---
+                time_payloads = payloads.get("sql_injection:time") or []
+                time_payloads = [p for p in time_payloads
+                                 if any(d in (p.get("tags") or []) for d in dialects)]
+                for p in time_payloads:
                     payload_str = str(p["content"]).replace("8", str(sleep_seconds))
                     args = dict(baseline_args)
                     args[param_name] = payload_str
@@ -121,6 +132,22 @@ def execute(target, params, context):
                             tname, param_name, payload_str, dt, sleep_seconds,
                             r, context, target, p.get("tags") or []))
                         break
+
+                # --- Layer 4: WAF-bypass retry on params with no hits yet ---
+                if waf_bypass:
+                    for p in payloads.get("sql_injection:bypass") or []:
+                        args = dict(baseline_args)
+                        args[param_name] = str(p["content"])
+                        r = mcp.call_tool_safe(tname, args)
+                        text = (r.get("text_output") or "").lower()
+                        if _sql_error_markers(text):
+                            rb.add_finding(_build_finding(
+                                tname, param_name, p["content"], r,
+                                "WAF-bypass error", "high", context, target,
+                                description=("WAF-bypass payload (case/comment/tab) "
+                                             "triggered an SQL error. Filter is "
+                                             "evadable.")))
+                            break
         return rb.finalize()
     finally:
         mcp.close()
@@ -136,7 +163,9 @@ def _pick_candidates(tools, force):
         blob = f"{t.get('name','')} {t.get('description','')}".lower()
         if any(k in blob for k in kws):
             out.append(t)
-    return out or tools
+    # If no keyword match, cap the fallback to 3 tools — prevents long
+    # runs against MCP servers without DB-shaped tools (e.g. GitHub MCP).
+    return out if out else (tools[:3] if tools else [])
 
 
 def _string_params(schema):

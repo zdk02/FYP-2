@@ -276,11 +276,71 @@ def _running_states():
     return ('running', 'active')
 
 
+_CWE_TO_ATTACK_TAG = {
+    'CWE-78':  'command_injection',
+    'CWE-89':  'sql_injection',
+    'CWE-94':  'rce',
+    'CWE-22':  'path_traversal',
+    'CWE-918': 'ssrf',
+    'CWE-77':  'prompt_injection',
+    'CWE-502': 'deserialization',
+    'CWE-287': 'auth_bypass',
+    'CWE-306': 'auth_bypass',
+    'CWE-200': 'info_disclosure',
+    'CWE-532': 'info_disclosure',
+    'CWE-319': 'mitm',
+    'CWE-326': 'mitm',
+    'CWE-770': 'dos',
+    'CWE-674': 'dos',
+}
+
+
+def _maybe_add_attacks(campaign_id, existing_attack_ids, scan_findings):
+    """After a background scan completes, add active attacks whose tags
+    overlap with the scanner's CWE / category hits. Idempotent — won't
+    add duplicates."""
+    wanted = set()
+    for f in scan_findings:
+        cwe = (f.get('cwe') or '').upper()
+        cat = (f.get('category') or '').lower()
+        if cwe in _CWE_TO_ATTACK_TAG:
+            wanted.add(_CWE_TO_ATTACK_TAG[cwe])
+        if cat:
+            wanted.add(cat)
+    if not wanted:
+        return
+    campaign = Campaign.query.get(campaign_id)
+    if not campaign:
+        return
+    current_ids = {a.id for a in campaign.attacks} | set(existing_attack_ids or [])
+    pool = Attack.query.filter(Attack.is_active == True).all()  # noqa: E712
+    for atk in pool:
+        if atk.id in current_ids:
+            continue
+        tag_blob = ''
+        raw = getattr(atk, 'tags', None)
+        if isinstance(raw, str):
+            tag_blob = raw.lower()
+        elif isinstance(raw, (list, tuple)):
+            tag_blob = ' '.join(str(t).lower() for t in raw)
+        if any(t in tag_blob for t in wanted):
+            campaign.attacks.append(atk)
+            current_ids.add(atk.id)
+    db.session.commit()
+
+
 @api_bp.route('/campaigns/<campaign_id>/start', methods=['POST'])
 @jwt_required()
 @require_role('admin', 'manager', 'operator')
 def start_campaign(campaign_id):
-    """Start campaign execution"""
+    """Start campaign execution.
+
+    If the campaign's `scope_definition` includes `phases: ["scan", "exploit"]`
+    (or `phases: ["scan"]`), Minerva runs the configured scanner plugins
+    against every target FIRST, persists the scan findings, and (optionally)
+    uses the scan results to scope or expand the attack set before queuing
+    AttackExecutions. See campaigns/scan_first.md.
+    """
     user_id = get_jwt_identity()
     campaign = Campaign.query.get_or_404(campaign_id)
 
@@ -289,22 +349,36 @@ def start_campaign(campaign_id):
     if campaign.status == 'completed':
         return jsonify({'error': 'Campaign is already completed. Clone it to run again.'}), 400
 
+    # Pull phase config out of scope_definition
+    scope_cfg = {}
+    if campaign.scope_definition:
+        try:
+            scope_cfg = json.loads(campaign.scope_definition) or {}
+        except Exception:
+            scope_cfg = {}
+    phases = scope_cfg.get('phases') or ['exploit']
+    scan_plugin_ids = scope_cfg.get('scan_plugins') or [
+        'client_vuln_scanner', 'server_vuln_scanner',
+    ]
+    auto_select_from_scan = bool(scope_cfg.get('auto_select_attacks_from_scan', False))
+    scan_params = scope_cfg.get('scan_params') or {}
+
     targets = list(campaign.targets)
     attacks = list(campaign.attacks)
 
     if not targets:
         return jsonify({'error': 'No targets configured for this campaign'}), 400
-    if not attacks:
+    if not attacks and 'scan' not in phases:
         return jsonify({'error': 'No attacks configured for this campaign'}), 400
 
     campaign.status = 'active'
     campaign.start_date = datetime.utcnow()
     campaign.progress = 0
 
-    # In manual mode we pre-queue pending execution rows so the UI shows the
-    # full plan. In automated mode the AttackExecutor creates them as it
-    # runs each attack — pre-queueing would duplicate them.
-    if campaign.mode != 'automated':
+    # ── Phase 1: queue exploit executions FIRST (so the UI shows the plan)─
+    # In manual mode, executions sit in 'pending' until the user runs them
+    # (per-execution Run button, batch-run, or by switching to automated).
+    if 'exploit' in phases and campaign.mode != 'automated':
         for target in targets:
             for attack in attacks:
                 execution = AttackExecution(
@@ -312,13 +386,84 @@ def start_campaign(campaign_id):
                     attack_id=attack.id,
                     target_id=target.id,
                     status='pending',
-                    config_used=json.dumps({'scenario': campaign.scenario, 'mode': campaign.mode}),
+                    config_used=json.dumps({
+                        'scenario': campaign.scenario,
+                        'mode': campaign.mode,
+                        'phase': 'exploit',
+                    }),
                     executed_by=user_id,
                 )
                 db.session.add(execution)
 
-    log_action(user_id, 'start', 'campaign', campaign_id, f'Started campaign: {campaign.name}')
+    log_action(user_id, 'start', 'campaign', campaign_id,
+               f'Started campaign: {campaign.name} (phases={phases})')
     db.session.commit()
+
+    # ── Phase 2: scan, runs in a BACKGROUND THREAD so we don't block ─────
+    # The thread updates the DB asynchronously; the UI sees scan findings
+    # appear over the next ~30-60s. start_campaign returns immediately.
+    if 'scan' in phases:
+        from flask import current_app as _ca
+        _app = _ca._get_current_object()
+        target_dicts = [{
+            'id': t.id, 'name': t.name,
+            'host': t.host, 'port': t.port, 'protocol': t.protocol,
+            'base_url': getattr(t, 'base_url', None) or
+                        f"{t.protocol}://{t.host}:{t.port}",
+            'auth_config': getattr(t, 'auth_config', None) or {},
+        } for t in targets]
+        attack_ids = [a.id for a in attacks]
+
+        def _bg_scan():
+            try:
+                from app.services import scanner_runner, scanner_registry
+            except Exception as e:
+                with _app.app_context():
+                    log_action(user_id, 'scan_error', 'campaign', campaign_id,
+                               f'scan import error: {e!s:.200}')
+                    db.session.commit()
+                return
+            for tdict in target_dicts:
+                for plugin_id in scan_plugin_ids:
+                    try:
+                        with _app.app_context():
+                            scanner_registry.plugin_dir(plugin_id)
+                    except Exception:
+                        continue
+                    try:
+                        with _app.app_context():
+                            res = scanner_runner.run_scanner(
+                                plugin_id, tdict, scan_params,
+                            )
+                            findings_count = len(res.get('findings') or [])
+                            log_action(
+                                user_id, 'scan_complete', 'campaign',
+                                campaign_id,
+                                f'{plugin_id} on {tdict["name"]}: '
+                                f'{findings_count} findings'
+                            )
+                            db.session.commit()
+                            # Auto-select attacks
+                            if auto_select_from_scan and (res.get('findings') or []):
+                                _maybe_add_attacks(
+                                    campaign_id, attack_ids,
+                                    res.get('findings') or [],
+                                )
+                    except Exception as e:
+                        with _app.app_context():
+                            log_action(user_id, 'scan_error', 'campaign',
+                                       campaign_id,
+                                       f'{plugin_id} on {tdict["name"]}: '
+                                       f'{e!s:.300}')
+                            db.session.commit()
+
+        import threading as _threading
+        _threading.Thread(target=_bg_scan, daemon=True).start()
+        scan_summary = [{'queued': len(target_dicts) * len(scan_plugin_ids)}]
+    else:
+        scan_summary = []
+    auto_added = []
+    scan_findings = []
 
     if campaign.mode == 'automated':
         try:
@@ -337,7 +482,14 @@ def start_campaign(campaign_id):
     return jsonify({
         'message': 'Campaign started successfully',
         'status': campaign.status,
-        'total_executions': len(targets) * len(attacks),
+        'phases': phases,
+        'scan_phase': {
+            'plugins': scan_plugin_ids if 'scan' in phases else [],
+            'summary': scan_summary,
+            'findings_count': len(scan_findings),
+        },
+        'auto_added_attacks': auto_added,
+        'total_executions': len(targets) * len(attacks) if 'exploit' in phases else 0,
     })
 
 
@@ -428,6 +580,71 @@ def complete_campaign(campaign_id):
     log_action(user_id, 'complete', 'campaign', campaign_id, f'Completed campaign: {campaign.name}')
     db.session.commit()
     return jsonify({'message': 'Campaign marked as completed'})
+
+
+@api_bp.route('/campaigns/<campaign_id>/run-pending', methods=['POST'])
+@jwt_required()
+@require_role('admin', 'manager', 'operator')
+def run_pending_executions(campaign_id):
+    """Kick off every pending AttackExecution in this campaign.
+
+    Useful for manual-mode campaigns where executions are queued at
+    start_campaign() time but never run themselves. Each execution is
+    submitted to the AttackExecutor's thread pool and runs in the
+    background. Returns the count submitted.
+    """
+    user_id = get_jwt_identity()
+    Campaign.query.get_or_404(campaign_id)
+
+    pending = AttackExecution.query.filter_by(
+        campaign_id=campaign_id, status='pending'
+    ).all()
+    if not pending:
+        return jsonify({'message': 'No pending executions',
+                        'submitted': 0}), 200
+
+    from app.services.attack_service import AttackExecutor
+    executor = AttackExecutor()
+    submitted = 0
+    errors = []
+    for ex in pending:
+        attack = Attack.query.get(ex.attack_id)
+        target = Target.query.get(ex.target_id)
+        if not attack or not target:
+            continue
+        try:
+            cfg = json.loads(attack.default_config) if attack.default_config else {}
+        except Exception:
+            cfg = {}
+        try:
+            executor.execute_attack(
+                attack.id, target.id, cfg, user_id, campaign_id,
+                execution_id=ex.id,
+            )
+            submitted += 1
+        except TypeError:
+            # Older AttackExecutor signatures don't accept execution_id —
+            # fall back to creating a fresh execution and cancelling the
+            # placeholder.
+            try:
+                executor.execute_attack(attack.id, target.id, cfg, user_id,
+                                         campaign_id)
+                ex.status = 'cancelled'
+                submitted += 1
+            except Exception as e:
+                errors.append(f'{ex.id}: {e!s:.150}')
+        except Exception as e:
+            errors.append(f'{ex.id}: {e!s:.150}')
+
+    log_action(user_id, 'run_pending', 'campaign', campaign_id,
+               f'Submitted {submitted}/{len(pending)} pending executions')
+    db.session.commit()
+    return jsonify({
+        'message': f'Submitted {submitted} pending executions',
+        'submitted': submitted,
+        'total_pending': len(pending),
+        'errors': errors,
+    })
 
 
 @api_bp.route('/campaigns/<campaign_id>/executions', methods=['GET'])

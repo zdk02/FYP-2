@@ -1,6 +1,6 @@
 {
-  "version": "1.0",
-  "description": "Minerva pro-grade MCP pentesting attack pack.",
+  "version": "2.0",
+  "description": "Minerva pro-grade MCP pentesting attack pack. 24 attacks covering every documented MCP attack surface. All parameters are UI-dynamic — pentesters tune timeouts, transport, protocol version, payload tags, encoding modes, and target scoping at run-time.",
   "attacks": [
     {
       "file": "direct_prompt_injection.py",
@@ -9,15 +9,19 @@
       "severity": "critical",
       "attack_type": "injection",
       "mitre_id": "T1059",
-      "description": "Canary-verified prompt injection against every MCP tool with a string argument. Uses the real MCP JSON-RPC handshake across HTTP/SSE/WebSocket/stdio. Confirmed findings require the canary to appear in the tool response — zero false positives from heuristic matching.",
+      "description": "Canary-verified prompt injection across every MCP tool. Pulls the full payload library (zero-width split, Cyrillic confusables, RTL override, multilingual, Claude/GPT/markdown variants). Confirmed findings require the canary to appear in the tool response.",
       "config_schema": {
-        "timeout":       {"type": "integer", "title": "Per-request timeout (s)",  "default": 30, "minimum": 1, "maximum": 600, "description": "MCP transport timeout per call."},
-        "max_tools":     {"type": "integer", "title": "Max tools to probe",       "default": 20, "minimum": 1, "maximum": 500, "description": "Stop after this many tools have been tested."},
-        "max_payloads":  {"type": "integer", "title": "Max payloads per tool",    "default": 8,  "minimum": 1, "maximum": 200, "description": "Per-tool/parameter cap on injection variants."},
-        "allow_tools":   {"type": "array",   "title": "Only these tools",         "default": [], "items": {"type": "string"}, "description": "Whitelist tool names. Empty = probe everything."},
-        "block_tools":   {"type": "array",   "title": "Skip these tools",         "default": [], "items": {"type": "string"}, "description": "Tool-name blocklist (e.g. destructive admin tools)."}
+        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "max_tools":          {"type": "integer", "title": "Max tools to probe", "default": 20, "minimum": 1, "maximum": 500},
+        "max_payloads":       {"type": "integer", "title": "Max payloads per tool", "default": 12, "minimum": 1, "maximum": 200},
+        "max_params_per_tool":{"type": "integer", "title": "Max params per tool", "default": 3, "minimum": 1, "maximum": 50},
+        "allow_tools":        {"type": "array",   "title": "Only these tools", "default": [], "items": {"type": "string"}},
+        "block_tools":        {"type": "array",   "title": "Skip these tools", "default": [], "items": {"type": "string"}},
+        "payload_tags":       {"type": "array",   "title": "Extra payload-library tags (AND)", "default": [], "items": {"type": "string"}, "description": "Filter the payload library further. e.g. ['zero_width','rtl_override']"},
+        "protocol_version":   {"type": "string",  "title": "MCP protocol version", "default": "", "description": "Empty = framework default. Examples: 2025-06-18, 2025-03-26, 2024-11-05"},
+        "transport_override": {"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 30, "max_tools": 20, "max_payloads": 8, "allow_tools": [], "block_tools": []},
+      "default_config": {"timeout": 30, "max_tools": 20, "max_payloads": 12, "max_params_per_tool": 3, "allow_tools": [], "block_tools": [], "payload_tags": [], "protocol_version": "", "transport_override": ""},
       "tags": ["mcp", "prompt_injection", "canary", "client_side", "pro"],
       "references": [
         "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
@@ -31,16 +35,20 @@
       "severity": "critical",
       "attack_type": "injection",
       "mitre_id": "T1059",
-      "description": "Audits MCP resources for hostile directives that hijack downstream LLMs, plus tests tool-output echoing to confirm attacker strings reflect back to the client's context window.",
+      "description": "Audits MCP resources, prompts, and resource templates for hostile directives. Tests tool-output echoing to confirm attacker strings reflect into client context. Subscribes to resources to detect server-pushed prompt poisoning.",
       "config_schema": {
-        "timeout":           {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600, "description": "MCP transport timeout per call."},
-        "max_resources":     {"type": "integer", "title": "Max resources to audit",  "default": 50, "minimum": 1, "maximum": 1000, "description": "Cap on resources read for hostile-directive detection."},
-        "max_tools":         {"type": "integer", "title": "Max tools (echo probe)",  "default": 20, "minimum": 1, "maximum": 500,  "description": "Cap on tools tested for output-echo behaviour."},
-        "only_tool_names":   {"type": "array",   "title": "Only these tools",        "default": [], "items": {"type": "string"},   "description": "Whitelist tool names for echo probe. Empty = all."},
-        "probe_resources":   {"type": "boolean", "title": "Probe resources",         "default": true,                                "description": "Audit MCP resources for embedded prompt-injection text."},
-        "probe_tool_echo":   {"type": "boolean", "title": "Probe tool echo",         "default": true,                                "description": "Send canary text via tools to detect verbatim reflection."}
+        "timeout":           {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "max_resources":     {"type": "integer", "title": "Max resources to audit", "default": 50, "minimum": 1, "maximum": 1000},
+        "max_tools":         {"type": "integer", "title": "Max tools (echo probe)", "default": 20, "minimum": 1, "maximum": 500},
+        "only_tool_names":   {"type": "array",   "title": "Only these tools", "default": [], "items": {"type": "string"}},
+        "probe_resources":   {"type": "boolean", "title": "Audit resources", "default": true},
+        "probe_tool_echo":   {"type": "boolean", "title": "Probe tool echo", "default": true},
+        "probe_subscriptions":{"type": "boolean","title": "Probe resource subscriptions", "default": true},
+        "probe_completion":  {"type": "boolean", "title": "Probe completion/complete", "default": true},
+        "protocol_version":  {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override":{"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 30, "max_resources": 50, "max_tools": 20, "only_tool_names": [], "probe_resources": true, "probe_tool_echo": true},
+      "default_config": {"timeout": 30, "max_resources": 50, "max_tools": 20, "only_tool_names": [], "probe_resources": true, "probe_tool_echo": true, "probe_subscriptions": true, "probe_completion": true, "protocol_version": "", "transport_override": ""},
       "tags": ["mcp", "prompt_injection", "indirect", "client_side", "pro"]
     },
     {
@@ -50,14 +58,18 @@
       "severity": "high",
       "attack_type": "manipulation",
       "mitre_id": "T1195",
-      "description": "Read-only audit of MCP tool / prompt / resource metadata for hidden instructions: zero-width unicode, HTML comments, fake deprecation banners, role-switch directives, shell-command strings. Zero false positives from network noise.",
+      "description": "Static + active audit of MCP tool / prompt / resource metadata. Detects zero-width unicode, HTML comments, fake deprecation, role-switch directives, RTL override. Then ACTIVELY calls the poisoned tool to verify the directive influenced output (confidence promotion).",
       "config_schema": {
-        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 20, "minimum": 1, "maximum": 600, "description": "MCP transport timeout per call."},
-        "include_prompts":    {"type": "boolean", "title": "Audit prompts",            "default": true,                              "description": "Also audit MCP prompt metadata for hidden directives."},
-        "include_resources":  {"type": "boolean", "title": "Audit resources",          "default": true,                              "description": "Also audit MCP resource metadata for hidden directives."}
+        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 20, "minimum": 1, "maximum": 600},
+        "include_prompts":    {"type": "boolean", "title": "Audit prompts", "default": true},
+        "include_resources":  {"type": "boolean", "title": "Audit resources", "default": true},
+        "active_exploitation":{"type": "boolean", "title": "Actively call poisoned tools", "default": true, "description": "Promotes findings from 'high' to 'confirmed' when directive influences output."},
+        "max_active_calls":   {"type": "integer", "title": "Max active-exploit calls", "default": 10, "minimum": 0, "maximum": 200},
+        "protocol_version":   {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override": {"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 20, "include_prompts": true, "include_resources": true},
-      "tags": ["mcp", "tool_poisoning", "static", "client_side", "pro"],
+      "default_config": {"timeout": 20, "include_prompts": true, "include_resources": true, "active_exploitation": true, "max_active_calls": 10, "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "tool_poisoning", "static", "active", "client_side", "pro"],
       "references": ["https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"]
     },
     {
@@ -67,13 +79,16 @@
       "severity": "high",
       "attack_type": "manipulation",
       "mitre_id": "T1574",
-      "description": "Detects (1) tool-name collisions after normalisation (LLM routing ambiguity), (2) tool-description duplication, (3) time-of-check vs time-of-use drift by sampling tools/list multiple times and comparing fingerprints.",
+      "description": "Detects tool-name collisions, description duplication, and TOCTOU drift across multiple tools/list snapshots. Optionally exercises ambiguous tools to record which implementation answers — exploitation proof, not just detection.",
       "config_schema": {
-        "timeout":       {"type": "integer", "title": "Per-request timeout (s)",  "default": 20,  "minimum": 1, "maximum": 600,  "description": "MCP transport timeout per call."},
-        "samples":       {"type": "integer", "title": "Snapshot samples",         "default": 5,   "minimum": 2, "maximum": 60,   "description": "How many tools/list snapshots to compare for drift."},
-        "delay_seconds": {"type": "number",  "title": "Delay between samples (s)","default": 1.0, "minimum": 0.0, "maximum": 60, "description": "Pause between snapshots — increase to catch slow rebinding."}
+        "timeout":           {"type": "integer", "title": "Per-request timeout (s)", "default": 20, "minimum": 1, "maximum": 600},
+        "samples":           {"type": "integer", "title": "Snapshot samples", "default": 5, "minimum": 2, "maximum": 60},
+        "delay_seconds":     {"type": "number",  "title": "Delay between samples (s)", "default": 1.0, "minimum": 0.0, "maximum": 60},
+        "exploit_collisions":{"type": "boolean", "title": "Exploit name collisions", "default": true, "description": "Call colliding tool names to record routing."},
+        "protocol_version":  {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override":{"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 20, "samples": 5, "delay_seconds": 1.0},
+      "default_config": {"timeout": 20, "samples": 5, "delay_seconds": 1.0, "exploit_collisions": true, "protocol_version": "", "transport_override": ""},
       "tags": ["mcp", "toctou", "shadowing", "client_side", "pro"]
     },
     {
@@ -83,16 +98,21 @@
       "severity": "critical",
       "attack_type": "injection",
       "mitre_id": "T1059",
-      "description": "Two-layer detection: timing-based blind (sleep delta) and OOB-callback confirmed. Automatic baseline measurement prevents false positives on slow networks. OOB confirmation uses Minerva's in-built canary service — no external Burp Collaborator needed.",
+      "description": "Three-layer detection: timing-based blind, OOB-callback confirmed, and adaptive encoding-bypass mutation (IFS, base64, env-var, null-byte). Auto baseline measurement; PowerShell + lolbin payloads on Windows hosts.",
       "config_schema": {
-        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 30,  "minimum": 1, "maximum": 600,  "description": "MCP transport timeout per call."},
-        "sleep_seconds":      {"type": "integer", "title": "Sleep payload (s)",       "default": 8,   "minimum": 1, "maximum": 120,  "description": "Sleep length used for timing-based blind detection."},
-        "timing_tolerance":   {"type": "number",  "title": "Timing tolerance (s)",    "default": 2.0, "minimum": 0, "maximum": 60,   "description": "Seconds of slack around sleep_seconds (raise on flaky networks)."},
-        "oob_wait_seconds":   {"type": "integer", "title": "OOB wait (s)",            "default": 20,  "minimum": 1, "maximum": 300,  "description": "How long to wait for the OOB callback."},
-        "max_tools":          {"type": "integer", "title": "Max tools to probe",      "default": 20,  "minimum": 1, "maximum": 500,  "description": "Stop after this many tools have been tested."},
-        "only_tool_names":    {"type": "array",   "title": "Only these tools",        "default": [],  "items": {"type": "string"},  "description": "Whitelist tool names. Empty = auto-detect candidates."}
+        "timeout":           {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "sleep_seconds":     {"type": "integer", "title": "Sleep payload (s)", "default": 8, "minimum": 1, "maximum": 120},
+        "timing_tolerance":  {"type": "number",  "title": "Timing tolerance (s)", "default": 2.0, "minimum": 0, "maximum": 60},
+        "oob_wait_seconds":  {"type": "integer", "title": "OOB wait (s)", "default": 20, "minimum": 1, "maximum": 300},
+        "max_tools":         {"type": "integer", "title": "Max tools to probe", "default": 20, "minimum": 1, "maximum": 500},
+        "only_tool_names":   {"type": "array",   "title": "Only these tools", "default": [], "items": {"type": "string"}},
+        "bypass_modes":      {"type": "array",   "title": "Encoding bypass modes", "default": ["ifs", "base64", "env"], "items": {"type": "string", "enum": ["ifs", "base64", "env", "null_byte", "newline", "powershell"]}},
+        "windows_payloads":  {"type": "boolean", "title": "Include Windows payloads", "default": true},
+        "tool_keywords":     {"type": "array",   "title": "Tool-name keywords", "default": [], "items": {"type": "string"}, "description": "Override the default keyword list for candidate selection."},
+        "protocol_version":  {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override":{"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 30, "sleep_seconds": 8, "timing_tolerance": 2.0, "oob_wait_seconds": 20, "max_tools": 20, "only_tool_names": []},
+      "default_config": {"timeout": 30, "sleep_seconds": 6, "timing_tolerance": 2.0, "oob_wait_seconds": 8, "max_tools": 8, "only_tool_names": [], "bypass_modes": ["ifs", "base64", "env"], "windows_payloads": true, "tool_keywords": [], "protocol_version": "", "transport_override": ""},
       "tags": ["mcp", "command_injection", "oob", "timing", "server_side", "pro"],
       "references": ["https://cwe.mitre.org/data/definitions/78.html"]
     },
@@ -103,15 +123,19 @@
       "severity": "critical",
       "attack_type": "injection",
       "mitre_id": "T1190",
-      "description": "Three-layer SQLi detection: error-based (DB error message markers), boolean-based (true/false response diff), and time-based (MySQL, Postgres, MSSQL, Oracle dialect-specific sleeps). Confidence scales from medium → confirmed with successive layers.",
+      "description": "Four-layer SQLi: error-based DB fingerprint, boolean-based, time-based per-dialect (MySQL/PG/MSSQL/Oracle/SQLite), WAF bypass on retry (case/comment/tab). Confidence scales medium→confirmed.",
       "config_schema": {
-        "timeout":          {"type": "integer", "title": "Per-request timeout (s)", "default": 30,  "minimum": 1, "maximum": 600, "description": "MCP transport timeout per call."},
-        "sleep_seconds":    {"type": "integer", "title": "Time-based sleep (s)",    "default": 8,   "minimum": 1, "maximum": 120, "description": "Sleep length used for time-based blind SQLi (MySQL/PG/MSSQL/Oracle dialects)."},
-        "timing_tolerance": {"type": "number",  "title": "Timing tolerance (s)",    "default": 2.0, "minimum": 0, "maximum": 60,  "description": "Seconds of slack around sleep_seconds — raise on flaky networks."},
-        "max_tools":        {"type": "integer", "title": "Max tools to probe",      "default": 20,  "minimum": 1, "maximum": 500, "description": "Stop after this many tools have been tested."},
-        "only_tool_names":  {"type": "array",   "title": "Only these tools",        "default": [],  "items": {"type": "string"}, "description": "Whitelist tool names. Empty = auto-detect query-shaped tools."}
+        "timeout":           {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "sleep_seconds":     {"type": "integer", "title": "Time-based sleep (s)", "default": 8, "minimum": 1, "maximum": 120},
+        "timing_tolerance":  {"type": "number",  "title": "Timing tolerance (s)", "default": 2.0, "minimum": 0, "maximum": 60},
+        "max_tools":         {"type": "integer", "title": "Max tools to probe", "default": 20, "minimum": 1, "maximum": 500},
+        "only_tool_names":   {"type": "array",   "title": "Only these tools", "default": [], "items": {"type": "string"}},
+        "dialects":          {"type": "array",   "title": "Time-based dialects", "default": ["mysql", "postgres", "mssql", "oracle", "sqlite"], "items": {"type": "string", "enum": ["mysql", "postgres", "mssql", "oracle", "sqlite"]}},
+        "waf_bypass":        {"type": "boolean", "title": "Retry with WAF-bypass payloads", "default": true},
+        "protocol_version":  {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override":{"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 30, "sleep_seconds": 8, "timing_tolerance": 2.0, "max_tools": 20, "only_tool_names": []},
+      "default_config": {"timeout": 30, "sleep_seconds": 6, "timing_tolerance": 2.0, "max_tools": 8, "only_tool_names": [], "dialects": ["mysql", "postgres", "mssql", "oracle", "sqlite"], "waf_bypass": true, "protocol_version": "", "transport_override": ""},
       "tags": ["mcp", "sql_injection", "boolean", "timing", "server_side", "pro"],
       "references": ["https://cwe.mitre.org/data/definitions/89.html"]
     },
@@ -122,17 +146,23 @@
       "severity": "critical",
       "attack_type": "injection",
       "mitre_id": "T1059",
-      "description": "OOB-confirmed RCE against code-runtime tools (eval, exec, render, SSTI). Tries Python/Node/PHP/Ruby payloads per tool; falls back to timing-based detection where egress is blocked.",
+      "description": "OOB-confirmed RCE plus reverse-shell PoC. Tries Python/Node/PHP/Ruby/Java payloads + SSTI (Jinja/SpEL) + Log4Shell JNDI. Falls back to timing detection where egress is blocked.",
       "config_schema": {
-        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600,  "description": "MCP transport timeout per call."},
-        "oob_wait_seconds":   {"type": "integer", "title": "OOB wait (s)",            "default": 20, "minimum": 1, "maximum": 300,  "description": "How long to wait for the OOB callback."},
-        "sleep_seconds":      {"type": "integer", "title": "Timing sleep (s)",        "default": 8,  "minimum": 1, "maximum": 120,  "description": "Sleep length used for timing-based fallback detection."},
-        "only_tool_names":    {"type": "array",   "title": "Only these tools",        "default": [], "items": {"type": "string"},  "description": "Whitelist tool names. Empty = auto-detect code-runtime tools."},
-        "try_reverse_shell":  {"type": "boolean", "title": "Try reverse shell PoC",   "default": true,                              "description": "If OOB confirmation fails, attempt a reverse-shell connect-back as proof."},
-        "rs_wait_seconds":    {"type": "integer", "title": "Reverse-shell wait (s)",  "default": 15, "minimum": 1, "maximum": 300,  "description": "Listener TTL for reverse-shell PoC."}
+        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "oob_wait_seconds":   {"type": "integer", "title": "OOB wait (s)", "default": 20, "minimum": 1, "maximum": 300},
+        "sleep_seconds":      {"type": "integer", "title": "Timing sleep (s)", "default": 8, "minimum": 1, "maximum": 120},
+        "only_tool_names":    {"type": "array",   "title": "Only these tools", "default": [], "items": {"type": "string"}},
+        "languages":          {"type": "array",   "title": "Languages to test", "default": ["python", "node", "php", "ruby", "java"], "items": {"type": "string", "enum": ["python", "node", "php", "ruby", "java", "perl", "go", "dotnet"]}},
+        "include_ssti":       {"type": "boolean", "title": "Include SSTI gadgets", "default": true},
+        "include_log4shell":  {"type": "boolean", "title": "Include Log4Shell JNDI", "default": true},
+        "try_reverse_shell":  {"type": "boolean", "title": "Try reverse-shell PoC", "default": true},
+        "rs_wait_seconds":    {"type": "integer", "title": "Reverse-shell wait (s)", "default": 15, "minimum": 1, "maximum": 300},
+        "tool_keywords":      {"type": "array",   "title": "Tool-name keywords", "default": [], "items": {"type": "string"}},
+        "protocol_version":   {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override": {"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 30, "oob_wait_seconds": 20, "sleep_seconds": 8, "only_tool_names": [], "try_reverse_shell": true, "rs_wait_seconds": 15},
-      "tags": ["mcp", "rce", "oob", "reverse_shell", "server_side", "pro"],
+      "default_config": {"timeout": 30, "oob_wait_seconds": 8, "sleep_seconds": 6, "only_tool_names": [], "languages": ["python", "node", "php", "ruby", "java"], "include_ssti": true, "include_log4shell": true, "try_reverse_shell": false, "rs_wait_seconds": 10, "tool_keywords": [], "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "rce", "oob", "reverse_shell", "ssti", "log4shell", "server_side", "pro"],
       "references": ["https://cwe.mitre.org/data/definitions/94.html"]
     },
     {
@@ -142,15 +172,20 @@
       "severity": "high",
       "attack_type": "injection",
       "mitre_id": "T1190",
-      "description": "OOB-confirmed Server-Side Request Forgery on URL-accepting MCP tools. Injects Minerva canary URLs; callback proves forgery. Additionally probes AWS/GCP/Azure metadata endpoints for impact demonstration.",
+      "description": "OOB-confirmed SSRF on URL-accepting tools. Modern cloud-metadata probes (AWS IMDSv2 token flow, GCP Metadata-Flavor header, Azure scope params, OCI/Alibaba/DO/Hetzner). Plus K8s SA token, Docker socket, etcd/consul, gopher Redis.",
       "config_schema": {
-        "timeout":               {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600, "description": "MCP transport timeout per call."},
-        "oob_wait_seconds":      {"type": "integer", "title": "OOB wait (s)",             "default": 20, "minimum": 1, "maximum": 300, "description": "How long to wait for the OOB callback."},
-        "probe_cloud_metadata":  {"type": "boolean", "title": "Probe cloud metadata",     "default": true,                              "description": "Also probe AWS 169.254.169.254, GCP metadata.google.internal, Azure IMDS for impact."},
-        "only_tool_names":       {"type": "array",   "title": "Only these tools",         "default": [], "items": {"type": "string"},  "description": "Whitelist tool names. Empty = auto-detect URL-accepting tools."}
+        "timeout":              {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "oob_wait_seconds":     {"type": "integer", "title": "OOB wait (s)", "default": 20, "minimum": 1, "maximum": 300},
+        "probe_cloud_metadata": {"type": "boolean", "title": "Probe cloud metadata", "default": true},
+        "cloud_providers":      {"type": "array",   "title": "Cloud providers to probe", "default": ["aws", "gcp", "azure", "oracle", "alibaba", "do", "hetzner", "k8s", "container"], "items": {"type": "string", "enum": ["aws", "gcp", "azure", "oracle", "alibaba", "do", "hetzner", "k8s", "container"]}},
+        "min_severity":         {"type": "string",  "title": "Min severity to probe", "default": "low", "enum": ["critical", "high", "medium", "low"]},
+        "only_tool_names":      {"type": "array",   "title": "Only these tools", "default": [], "items": {"type": "string"}},
+        "url_keywords":         {"type": "array",   "title": "URL-param keywords", "default": [], "items": {"type": "string"}, "description": "Override default keyword set for URL-tool detection."},
+        "protocol_version":     {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override":   {"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 30, "oob_wait_seconds": 20, "probe_cloud_metadata": true, "only_tool_names": []},
-      "tags": ["mcp", "ssrf", "oob", "cloud_metadata", "server_side", "pro"],
+      "default_config": {"timeout": 30, "oob_wait_seconds": 8, "probe_cloud_metadata": true, "cloud_providers": ["aws", "gcp", "azure", "k8s"], "min_severity": "high", "only_tool_names": [], "url_keywords": [], "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "ssrf", "oob", "cloud_metadata", "imdsv2", "server_side", "pro"],
       "references": ["https://cwe.mitre.org/data/definitions/918.html"]
     },
     {
@@ -160,12 +195,19 @@
       "severity": "high",
       "attack_type": "exploitation",
       "mitre_id": "T1083",
-      "description": "Confirms path traversal by reading canonical marker files (/etc/passwd, hosts, SSH keys) through file-accepting MCP tools. Auto-detects Linux/Windows targets.",
+      "description": "Confirms path traversal via canonical markers across Linux + Windows + /proc/self + cloud-creds files. Adaptive encoding-bypass retry (URL, double, UTF-8 overlong, null-byte, unicode).",
       "config_schema": {
-        "timeout":         {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600, "description": "MCP transport timeout per call."},
-        "only_tool_names": {"type": "array",   "title": "Only these tools",        "default": [], "items": {"type": "string"}, "description": "Whitelist tool names. Empty = auto-detect file-reading tools."}
+        "timeout":           {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "only_tool_names":   {"type": "array",   "title": "Only these tools", "default": [], "items": {"type": "string"}},
+        "platforms":         {"type": "array",   "title": "Target platforms", "default": ["linux", "windows"], "items": {"type": "string", "enum": ["linux", "windows", "macos"]}},
+        "encoding_modes":    {"type": "array",   "title": "Encoding bypass modes", "default": ["plain", "url", "double_url", "utf8_overlong", "null_byte", "unicode"], "items": {"type": "string", "enum": ["plain", "url", "double_url", "utf8_overlong", "null_byte", "unicode", "triple_dot"]}},
+        "include_proc_self": {"type": "boolean", "title": "Include /proc/self/* targets", "default": true},
+        "include_cloud_creds":{"type":"boolean", "title": "Include cloud-creds files", "default": true},
+        "param_keywords":    {"type": "array",   "title": "Path-param keyword override", "default": [], "items": {"type": "string"}},
+        "protocol_version":  {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override":{"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 30, "only_tool_names": []},
+      "default_config": {"timeout": 30, "only_tool_names": [], "platforms": ["linux", "windows"], "encoding_modes": ["plain", "url", "double_url", "utf8_overlong", "null_byte", "unicode"], "include_proc_self": true, "include_cloud_creds": true, "param_keywords": [], "protocol_version": "", "transport_override": ""},
       "tags": ["mcp", "path_traversal", "lfi", "server_side", "pro"],
       "references": ["https://cwe.mitre.org/data/definitions/22.html"]
     },
@@ -176,13 +218,20 @@
       "severity": "critical",
       "attack_type": "bypass",
       "mitre_id": "T1078",
-      "description": "Compares authenticated vs unauthenticated vs invalid-token MCP handshakes. Flags missing auth, accepted arbitrary tokens, token oracles (error-text leakage), and per-tool auth bypass where sensitive tools skip enforcement.",
+      "description": "Auth/no-auth/bad-token comparison + JWT alg=none / kid SQLi / weak-HMAC tests + per-tool authorization probing. Detects token oracles via error-text differential.",
       "config_schema": {
-        "timeout":         {"type": "integer", "title": "Per-request timeout (s)", "default": 20,   "minimum": 1, "maximum": 600, "description": "MCP transport timeout per call."},
-        "test_tool_call":  {"type": "boolean", "title": "Test per-tool auth",      "default": true,                                "description": "Call every tool without credentials to detect per-tool authn skips."}
+        "timeout":           {"type": "integer", "title": "Per-request timeout (s)", "default": 20, "minimum": 1, "maximum": 600},
+        "test_tool_call":    {"type": "boolean", "title": "Test per-tool auth", "default": true},
+        "test_jwt_alg_none": {"type": "boolean", "title": "Test JWT alg=none", "default": true},
+        "test_jwt_kid_sqli": {"type": "boolean", "title": "Test JWT kid SQLi", "default": true},
+        "test_jwt_weak_hmac":{"type": "boolean", "title": "Test JWT weak-HMAC keys", "default": true},
+        "weak_hmac_keys":    {"type": "array",   "title": "HMAC keys to brute-force", "default": ["secret", "password", "key", "changeme", "123456"], "items": {"type": "string"}},
+        "max_tools_to_probe":{"type": "integer", "title": "Max tools to per-tool-probe", "default": 10, "minimum": 1, "maximum": 200},
+        "protocol_version":  {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override":{"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 20, "test_tool_call": true},
-      "tags": ["mcp", "auth_bypass", "authz", "server_side", "pro"],
+      "default_config": {"timeout": 20, "test_tool_call": true, "test_jwt_alg_none": true, "test_jwt_kid_sqli": true, "test_jwt_weak_hmac": true, "weak_hmac_keys": ["secret", "password", "key", "changeme", "123456"], "max_tools_to_probe": 10, "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "auth_bypass", "jwt", "server_side", "pro"],
       "references": ["https://cwe.mitre.org/data/definitions/287.html"]
     },
     {
@@ -192,12 +241,16 @@
       "severity": "high",
       "attack_type": "manipulation",
       "mitre_id": "T1574",
-      "description": "Functional TOCTOU race: tools/list → exercise each tool → tools/list again. Flags tools that appear/disappear/mutate mid-session — the MCP equivalent of DNS rebinding.",
+      "description": "Functional TOCTOU race: tools/list → exercise each → tools/list again. Flags tools that appear/disappear/mutate. Optionally tests sampling/createMessage to see if rebound tools auto-call.",
       "config_schema": {
-        "timeout":    {"type": "integer", "title": "Per-request timeout (s)", "default": 20,   "minimum": 1, "maximum": 600, "description": "MCP transport timeout per call."},
-        "call_tools": {"type": "boolean", "title": "Exercise tools",           "default": true,                                "description": "Call each tool between snapshots to provoke server-side rebinding."}
+        "timeout":           {"type": "integer", "title": "Per-request timeout (s)", "default": 20, "minimum": 1, "maximum": 600},
+        "call_tools":        {"type": "boolean", "title": "Exercise tools", "default": true},
+        "max_tools":         {"type": "integer", "title": "Max tools to exercise", "default": 10, "minimum": 1, "maximum": 200},
+        "exercise_delay":    {"type": "number",  "title": "Delay between sample + re-list (s)", "default": 0.5, "minimum": 0, "maximum": 30},
+        "protocol_version":  {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override":{"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 20, "call_tools": true},
+      "default_config": {"timeout": 20, "call_tools": true, "max_tools": 10, "exercise_delay": 0.5, "protocol_version": "", "transport_override": ""},
       "tags": ["mcp", "tool_rebinding", "toctou", "client_side", "pro"]
     },
     {
@@ -207,15 +260,19 @@
       "severity": "medium",
       "attack_type": "denial_of_service",
       "mitre_id": "T1499",
-      "description": "Non-destructive DoS posture audit: oversized argument acceptance, deep JSON nesting, concurrency burst with no rate-limit. Observes dangerous input shapes without actually tipping the target over.",
+      "description": "Non-destructive DoS audit: oversized arg, deep nesting, concurrency burst with rate-limit-header inspection, latency degradation curve, ReDoS catastrophic-backtracking probe. Measures impact, doesn't tip the target over.",
       "config_schema": {
-        "timeout":             {"type": "integer", "title": "Per-request timeout (s)",     "default": 20,  "minimum": 1, "maximum": 600,  "description": "MCP transport timeout per call."},
-        "concurrency_burst":   {"type": "integer", "title": "Concurrency burst",           "default": 12,  "minimum": 1, "maximum": 200,  "description": "Simultaneous initialize handshakes to test rate-limiting."},
-        "big_string_kb":       {"type": "integer", "title": "Oversized arg size (KB)",     "default": 64,  "minimum": 1, "maximum": 8192, "description": "Size of oversized string argument used to test input limits."},
-        "deep_nesting":        {"type": "integer", "title": "JSON nesting depth",          "default": 200, "minimum": 2, "maximum": 5000, "description": "Depth of nested JSON object used to test parser limits."}
+        "timeout":           {"type": "integer", "title": "Per-request timeout (s)", "default": 20, "minimum": 1, "maximum": 600},
+        "concurrency_burst": {"type": "integer", "title": "Concurrency burst", "default": 12, "minimum": 1, "maximum": 200},
+        "big_string_kb":     {"type": "integer", "title": "Oversized arg size (KB)", "default": 64, "minimum": 1, "maximum": 8192},
+        "deep_nesting":      {"type": "integer", "title": "JSON nesting depth", "default": 200, "minimum": 2, "maximum": 5000},
+        "test_redos":        {"type": "boolean", "title": "Test ReDoS catastrophic backtracking", "default": true},
+        "test_amplification":{"type": "boolean", "title": "Test response-size amplification", "default": true},
+        "protocol_version":  {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override":{"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 20, "concurrency_burst": 12, "big_string_kb": 64, "deep_nesting": 200},
-      "tags": ["mcp", "dos", "rate_limit", "server_side", "pro"],
+      "default_config": {"timeout": 20, "concurrency_burst": 12, "big_string_kb": 64, "deep_nesting": 200, "test_redos": true, "test_amplification": true, "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "dos", "rate_limit", "redos", "server_side", "pro"],
       "references": ["https://cwe.mitre.org/data/definitions/400.html"]
     },
     {
@@ -225,14 +282,19 @@
       "severity": "high",
       "attack_type": "extraction",
       "mitre_id": "T1592",
-      "description": "Multi-surface leakage audit: debug/management paths, version-revealing headers, verbose JSON-RPC errors, and secrets leaking in tool responses (API keys, DB URLs, private keys, cloud creds).",
+      "description": "Multi-surface leakage audit. Discovered secrets are VALIDATED against issuer endpoints (AWS STS, GitHub /user, Slack auth.test, OpenAI/Anthropic /models) — confidence is promoted to 'confirmed' only when the secret authenticates. JWT structure analysed for alg=none / weak-HMAC.",
       "config_schema": {
-        "timeout":               {"type": "integer", "title": "Per-request timeout (s)",  "default": 20,   "minimum": 1, "maximum": 600, "description": "MCP transport timeout per call."},
-        "probe_debug_paths":     {"type": "boolean", "title": "Probe debug paths",         "default": true,                                "description": "Hit /debug, /metrics, /actuator, /env etc. for management surface leakage."},
-        "probe_tool_responses":  {"type": "boolean", "title": "Probe tool responses",      "default": true,                                "description": "Scan tool outputs for secrets (API keys, DB URLs, private keys, cloud creds)."}
+        "timeout":              {"type": "integer", "title": "Per-request timeout (s)", "default": 20, "minimum": 1, "maximum": 600},
+        "probe_debug_paths":    {"type": "boolean", "title": "Probe debug paths", "default": true},
+        "probe_tool_responses": {"type": "boolean", "title": "Probe tool responses", "default": true},
+        "validate_secrets":     {"type": "boolean", "title": "Validate found secrets against issuer", "default": true, "description": "Sends safe identity-only requests (e.g. STS GetCallerIdentity) to confirm secrets are real."},
+        "extra_debug_paths":    {"type": "array",   "title": "Extra debug paths to probe", "default": [], "items": {"type": "string"}},
+        "max_tools_to_probe":   {"type": "integer", "title": "Max tools to probe", "default": 12, "minimum": 1, "maximum": 200},
+        "protocol_version":     {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override":   {"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 20, "probe_debug_paths": true, "probe_tool_responses": true},
-      "tags": ["mcp", "info_disclosure", "secrets", "server_side", "pro"],
+      "default_config": {"timeout": 20, "probe_debug_paths": true, "probe_tool_responses": true, "validate_secrets": true, "extra_debug_paths": [], "max_tools_to_probe": 12, "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "info_disclosure", "secrets", "validated", "server_side", "pro"],
       "references": ["https://cwe.mitre.org/data/definitions/200.html"]
     },
     {
@@ -242,13 +304,18 @@
       "severity": "critical",
       "attack_type": "bypass",
       "mitre_id": "T1078",
-      "description": "Six safety-bypass patterns (DAN, grandma, hypothetical, delimiter-escape, base64, refusal-override). Confirms via canary + unsafe-marker co-occurrence in tool output; weaker partial-echo findings also reported.",
+      "description": "Multi-template safety-bypass corpus (DAN, grandma, hypothetical, delimiter-escape, base64, refusal-override) + adaptive escalation: each refusal triggers a stronger template. Confirms via canary + unsafe-marker co-occurrence.",
       "config_schema": {
-        "timeout":          {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600, "description": "MCP transport timeout per call."},
-        "max_tools":        {"type": "integer", "title": "Max tools to probe",      "default": 6,  "minimum": 1, "maximum": 100, "description": "Stop after this many tools have been jailbroken-tested."},
-        "only_tool_names":  {"type": "array",   "title": "Only these tools",        "default": [], "items": {"type": "string"}, "description": "Whitelist tool names. Empty = test the first max_tools."}
+        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "max_tools":          {"type": "integer", "title": "Max tools to probe", "default": 6, "minimum": 1, "maximum": 100},
+        "only_tool_names":    {"type": "array",   "title": "Only these tools", "default": [], "items": {"type": "string"}},
+        "templates":          {"type": "array",   "title": "Templates to use (empty = all)", "default": [], "items": {"type": "string", "enum": ["dan", "grandma", "hypothetical", "delimiter-escape", "base64", "refusal-override", "unicode-confusables", "multilingual"]}},
+        "escalation":         {"type": "boolean", "title": "Escalate on refusal", "default": true},
+        "escalation_steps":   {"type": "integer", "title": "Max escalation steps", "default": 3, "minimum": 1, "maximum": 10},
+        "protocol_version":   {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override": {"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 30, "max_tools": 6, "only_tool_names": []},
+      "default_config": {"timeout": 30, "max_tools": 6, "only_tool_names": [], "templates": [], "escalation": true, "escalation_steps": 3, "protocol_version": "", "transport_override": ""},
       "tags": ["mcp", "llm_jailbreak", "canary", "client_side", "pro"]
     },
     {
@@ -258,14 +325,18 @@
       "severity": "critical",
       "attack_type": "injection",
       "mitre_id": "T1059",
-      "description": "Tests pickle and YAML-load deserialization sinks. Three-phase proof: canary pickle, unsafe YAML load, and OOB-confirmed pickle (RCE via __reduce__).",
+      "description": "Tests pickle, YAML, Java preamble (AC ED 00 05), .NET BinaryFormatter sinks. Three-phase proof: canary, unsafe load, OOB-confirmed pickle (RCE via __reduce__).",
       "config_schema": {
-        "timeout":           {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600, "description": "MCP transport timeout per call."},
-        "oob_wait_seconds":  {"type": "integer", "title": "OOB wait (s)",             "default": 20, "minimum": 1, "maximum": 300, "description": "How long to wait for the OOB callback (pickle __reduce__ proof)."},
-        "only_tool_names":   {"type": "array",   "title": "Only these tools",         "default": [], "items": {"type": "string"}, "description": "Whitelist tool names. Empty = auto-detect deserialize-shaped tools."}
+        "timeout":           {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "oob_wait_seconds":  {"type": "integer", "title": "OOB wait (s)", "default": 20, "minimum": 1, "maximum": 300},
+        "only_tool_names":   {"type": "array",   "title": "Only these tools", "default": [], "items": {"type": "string"}},
+        "formats":           {"type": "array",   "title": "Formats to test", "default": ["pickle", "yaml", "java", "dotnet"], "items": {"type": "string", "enum": ["pickle", "yaml", "java", "dotnet", "php"]}},
+        "tool_keywords":     {"type": "array",   "title": "Tool-name keywords override", "default": [], "items": {"type": "string"}},
+        "protocol_version":  {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override":{"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 30, "oob_wait_seconds": 20, "only_tool_names": []},
-      "tags": ["mcp", "deserialization", "pickle", "yaml", "oob", "server_side", "pro"],
+      "default_config": {"timeout": 30, "oob_wait_seconds": 8, "only_tool_names": [], "formats": ["pickle", "yaml", "java", "dotnet"], "tool_keywords": [], "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "deserialization", "pickle", "yaml", "java", "oob", "server_side", "pro"],
       "references": ["https://cwe.mitre.org/data/definitions/502.html"]
     },
     {
@@ -275,14 +346,200 @@
       "severity": "high",
       "attack_type": "exfiltration",
       "mitre_id": "T1557",
-      "description": "Enterprise-grade transit audit: plain-HTTP accessibility, TLS version/cipher/cert expiry, HSTS presence, and secret leakage in tool responses (API keys, bearer tokens, cloud creds).",
+      "description": "Enterprise transit audit: plain-HTTP probe, TLS chain validation, version + cipher score, ALPN/SNI, HSTS/CSP/X-Frame, weak-cipher negotiation, secret leakage in tool responses.",
       "config_schema": {
-        "timeout":               {"type": "integer", "title": "Per-request timeout (s)", "default": 15,   "minimum": 1, "maximum": 600, "description": "TLS / HTTP probe timeout."},
-        "probe_tool_responses":  {"type": "boolean", "title": "Scan tool outputs",        "default": true,                                "description": "Pull a sample of tool outputs and scan them for secrets in transit."}
+        "timeout":              {"type": "integer", "title": "Per-request timeout (s)", "default": 15, "minimum": 1, "maximum": 600},
+        "probe_tool_responses": {"type": "boolean", "title": "Scan tool outputs", "default": true},
+        "validate_chain":       {"type": "boolean", "title": "Validate TLS chain", "default": true},
+        "test_weak_ciphers":    {"type": "boolean", "title": "Negotiate weak ciphers (RC4, 3DES, NULL)", "default": true},
+        "check_security_headers":{"type":"boolean", "title": "Check security headers (HSTS/CSP/XFO)", "default": true},
+        "protocol_version":     {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override":   {"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
       },
-      "default_config": {"timeout": 15, "probe_tool_responses": true},
+      "default_config": {"timeout": 15, "probe_tool_responses": true, "validate_chain": true, "test_weak_ciphers": true, "check_security_headers": true, "protocol_version": "", "transport_override": ""},
       "tags": ["mcp", "mitm", "tls", "data_in_transit", "pro"],
       "references": ["https://cwe.mitre.org/data/definitions/319.html"]
+    },
+    {
+      "file": "oauth_flow_attacks.py",
+      "name": "OAuth 2.1 Flow Attacks (Pro)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "critical",
+      "attack_type": "bypass",
+      "mitre_id": "T1078",
+      "description": "MCP 2025-06-18 mandates OAuth 2.1. Audits .well-known metadata, redirect-URI validation, PKCE enforcement, state requirement, token-endpoint client-auth bypass (alg=none JWT), audience confusion, scope laxity, bearer-token error oracles.",
+      "config_schema": {
+        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 20, "minimum": 1, "maximum": 600},
+        "follow_well_known":  {"type": "boolean", "title": "Fetch .well-known metadata", "default": true},
+        "metadata_url":       {"type": "string",  "title": "Pin metadata URL", "default": ""},
+        "authorize_url":      {"type": "string",  "title": "Pin authorize URL", "default": ""},
+        "token_url":          {"type": "string",  "title": "Pin token URL", "default": ""},
+        "redirect_test_uris": {"type": "array",   "title": "Redirect URIs to test", "default": ["https://attacker.example/cb", "http://localhost:1234/cb", "javascript:alert(1)", "data:text/html,<script>alert(1)</script>"], "items": {"type": "string"}},
+        "test_pkce":          {"type": "boolean", "title": "Test PKCE enforcement", "default": true},
+        "test_state":         {"type": "boolean", "title": "Test state requirement", "default": true},
+        "jwt_test":           {"type": "boolean", "title": "Test alg=none JWT bypass", "default": true},
+        "audience_test":      {"type": "boolean", "title": "Test audience confusion", "default": true},
+        "test_refresh":       {"type": "boolean", "title": "Test refresh-token reuse", "default": true},
+        "scopes_to_request":  {"type": "array",   "title": "Scopes to enumerate", "default": ["openid", "profile", "email", "mcp:read", "mcp:tools"], "items": {"type": "string"}}
+      },
+      "default_config": {"timeout": 20, "follow_well_known": true, "metadata_url": "", "authorize_url": "", "token_url": "", "redirect_test_uris": ["https://attacker.example/cb", "http://localhost:1234/cb", "javascript:alert(1)", "data:text/html,<script>alert(1)</script>"], "test_pkce": true, "test_state": true, "jwt_test": true, "audience_test": true, "test_refresh": true, "scopes_to_request": ["openid", "profile", "email", "mcp:read", "mcp:tools"]},
+      "tags": ["mcp", "oauth", "pkce", "jwt", "server_side", "pro"],
+      "references": [
+        "https://datatracker.ietf.org/doc/html/rfc6749",
+        "https://datatracker.ietf.org/doc/html/rfc7636",
+        "https://datatracker.ietf.org/doc/html/rfc8414",
+        "https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization"
+      ]
+    },
+    {
+      "file": "sampling_abuse.py",
+      "name": "Sampling Abuse (Pro)",
+      "subcategory": "Client-Side Attacks",
+      "severity": "high",
+      "attack_type": "manipulation",
+      "mitre_id": "T1059",
+      "description": "MCP `sampling/createMessage` is a client capability — servers should never advertise it nor respond to it. This attack tests capability advertising, reverse sampling probe (send to server), tool-induced sampling injection, and prompt-template delegation language.",
+      "config_schema": {
+        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "max_tools":          {"type": "integer", "title": "Max tools to probe", "default": 10, "minimum": 1, "maximum": 200},
+        "only_tool_names":    {"type": "array",   "title": "Only these tools", "default": [], "items": {"type": "string"}},
+        "reverse_test":       {"type": "boolean", "title": "Reverse sampling/createMessage probe", "default": true},
+        "audit_prompts":      {"type": "boolean", "title": "Audit prompt templates", "default": true},
+        "protocol_version":   {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override": {"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
+      },
+      "default_config": {"timeout": 30, "max_tools": 10, "only_tool_names": [], "reverse_test": true, "audit_prompts": true, "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "sampling", "client_side", "pro"],
+      "references": ["https://modelcontextprotocol.io/specification/2025-06-18/client/sampling"]
+    },
+    {
+      "file": "elicitation_abuse.py",
+      "name": "Elicitation Abuse (Pro)",
+      "subcategory": "Client-Side Attacks",
+      "severity": "high",
+      "attack_type": "manipulation",
+      "mitre_id": "T1566",
+      "description": "MCP 2025-06-18 elicitation/create lets the server ask the user for input. Tests capability mis-advertising, reverse elicitation probe, sensitive-field detection (password/api_key/OTP), and tool-output phishing language.",
+      "config_schema": {
+        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "max_tools":          {"type": "integer", "title": "Max tools to probe", "default": 10, "minimum": 1, "maximum": 200},
+        "only_tool_names":    {"type": "array",   "title": "Only these tools", "default": [], "items": {"type": "string"}},
+        "reverse_test":       {"type": "boolean", "title": "Reverse elicitation probe", "default": true},
+        "capture_window":     {"type": "number",  "title": "Capture window (s)", "default": 5.0, "minimum": 0, "maximum": 60},
+        "protocol_version":   {"type": "string",  "title": "MCP protocol version", "default": "2025-06-18"},
+        "transport_override": {"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
+      },
+      "default_config": {"timeout": 30, "max_tools": 10, "only_tool_names": [], "reverse_test": true, "capture_window": 5.0, "protocol_version": "2025-06-18", "transport_override": ""},
+      "tags": ["mcp", "elicitation", "phishing", "client_side", "pro"],
+      "references": ["https://modelcontextprotocol.io/specification/2025-06-18/client/elicitation"]
+    },
+    {
+      "file": "prompts_argument_injection.py",
+      "name": "Prompts Argument Injection (Pro)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "high",
+      "attack_type": "injection",
+      "mitre_id": "T1059",
+      "description": "Targets the prompts/get template surface. Canary verification + SSTI engines (Jinja2/Velocity/Handlebars/Mustache/EL/Razor/Twig) + role-message override + schema-laxity (extra/undeclared args).",
+      "config_schema": {
+        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "max_prompts":        {"type": "integer", "title": "Max prompts to test", "default": 30, "minimum": 1, "maximum": 500},
+        "only_prompt_names":  {"type": "array",   "title": "Only these prompts", "default": [], "items": {"type": "string"}},
+        "ssti_engines":       {"type": "array",   "title": "SSTI engines to try", "default": ["jinja2", "velocity", "handlebars", "mustache", "el", "razor", "twig"], "items": {"type": "string", "enum": ["jinja2", "jinja2-rce", "velocity", "handlebars", "mustache", "el", "razor", "twig"]}},
+        "test_role_override": {"type": "boolean", "title": "Test role-message injection", "default": true},
+        "protocol_version":   {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override": {"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
+      },
+      "default_config": {"timeout": 30, "max_prompts": 30, "only_prompt_names": [], "ssti_engines": ["jinja2", "velocity", "handlebars", "mustache", "el", "razor", "twig"], "test_role_override": true, "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "prompts", "ssti", "server_side", "pro"],
+      "references": ["https://modelcontextprotocol.io/specification/2025-06-18/server/prompts"]
+    },
+    {
+      "file": "stdio_argv_env_injection.py",
+      "name": "Stdio Argv / Env Injection (Pro)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "high",
+      "attack_type": "injection",
+      "mitre_id": "T1059",
+      "description": "Stdio-transport-specific. Probes argv splitting (newline/null/IFS), shell-variable expansion ($HOME / %PATH%), and env / process leakage (/proc/self/environ, $ENV).",
+      "config_schema": {
+        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "max_tools":          {"type": "integer", "title": "Max tools to probe", "default": 15, "minimum": 1, "maximum": 200},
+        "only_tool_names":    {"type": "array",   "title": "Only these tools", "default": [], "items": {"type": "string"}},
+        "argv_payloads":      {"type": "array",   "title": "Argv-style payloads (override)", "default": [], "items": {"type": "string"}},
+        "leak_payloads":      {"type": "array",   "title": "Env-leak payloads (override)", "default": [], "items": {"type": "string"}},
+        "force":              {"type": "boolean", "title": "Force run on non-stdio target", "default": false},
+        "protocol_version":   {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override": {"type": "string",  "title": "Transport override", "default": "stdio", "enum": ["", "http", "sse", "ws", "stdio"]}
+      },
+      "default_config": {"timeout": 30, "max_tools": 15, "only_tool_names": [], "argv_payloads": [], "leak_payloads": [], "force": false, "protocol_version": "", "transport_override": "stdio"},
+      "tags": ["mcp", "stdio", "argv", "env", "server_side", "pro"],
+      "references": ["https://cwe.mitre.org/data/definitions/88.html"]
+    },
+    {
+      "file": "schema_type_confusion.py",
+      "name": "Schema Type Confusion (Pro)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "medium",
+      "attack_type": "exploitation",
+      "mitre_id": "T1499",
+      "description": "Type-mismatch fuzzing of tool inputSchema: wrong-type values, numeric overflow, deep JSON nesting, extra-property handling, required-field omission, oneOf/anyOf polymorphic confusion.",
+      "config_schema": {
+        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "max_tools":          {"type": "integer", "title": "Max tools to probe", "default": 25, "minimum": 1, "maximum": 500},
+        "only_tool_names":    {"type": "array",   "title": "Only these tools", "default": [], "items": {"type": "string"}},
+        "test_overflow":      {"type": "boolean", "title": "Test numeric overflow", "default": true},
+        "test_deep_nesting":  {"type": "boolean", "title": "Test deep JSON nesting", "default": true},
+        "test_extras":        {"type": "boolean", "title": "Test extra properties", "default": true},
+        "test_required":      {"type": "boolean", "title": "Test required-field omission", "default": true},
+        "test_oneof":         {"type": "boolean", "title": "Test oneOf/anyOf confusion", "default": true},
+        "max_nesting_depth":  {"type": "integer", "title": "Deep-nest depth", "default": 200, "minimum": 2, "maximum": 5000},
+        "max_array_size":     {"type": "integer", "title": "Big-array size", "default": 5000, "minimum": 1, "maximum": 100000},
+        "protocol_version":   {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override": {"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
+      },
+      "default_config": {"timeout": 30, "max_tools": 25, "only_tool_names": [], "test_overflow": true, "test_deep_nesting": true, "test_extras": true, "test_required": true, "test_oneof": true, "max_nesting_depth": 200, "max_array_size": 5000, "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "type_confusion", "schema", "server_side", "pro"],
+      "references": ["https://cwe.mitre.org/data/definitions/704.html"]
+    },
+    {
+      "file": "pagination_cursor_abuse.py",
+      "name": "Pagination Cursor Abuse (Pro)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "high",
+      "attack_type": "injection",
+      "mitre_id": "T1190",
+      "description": "Opaque-cursor abuse on tools/list, resources/list, prompts/list, resources/templates/list. Tests SQLi/path-traversal/SSRF via cursor, oversized cursor DoS, type-confusion, and structural disclosure (decodable cursors leak DB internals).",
+      "config_schema": {
+        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "test_methods":       {"type": "array",   "title": "Methods to probe", "default": ["tools/list", "resources/list", "prompts/list", "resources/templates/list"], "items": {"type": "string"}},
+        "oversized_size_kb":  {"type": "integer", "title": "Oversized cursor (KB)", "default": 256, "minimum": 1, "maximum": 8192},
+        "oob_wait_seconds":   {"type": "integer", "title": "OOB wait (s)", "default": 15, "minimum": 1, "maximum": 300},
+        "protocol_version":   {"type": "string",  "title": "MCP protocol version", "default": ""},
+        "transport_override": {"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
+      },
+      "default_config": {"timeout": 30, "test_methods": ["tools/list", "resources/list", "prompts/list", "resources/templates/list"], "oversized_size_kb": 64, "oob_wait_seconds": 8, "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "pagination", "cursor", "server_side", "pro"],
+      "references": ["https://cwe.mitre.org/data/definitions/89.html"]
+    },
+    {
+      "file": "protocol_version_downgrade.py",
+      "name": "Protocol Version Downgrade (Pro)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "high",
+      "attack_type": "bypass",
+      "mitre_id": "T1562",
+      "description": "Negotiates every known MCP protocol version against the server. Flags acceptance of deprecated versions (lacking OAuth 2.1, elicitation), bogus future versions, mid-session re-init, and JSON-RPC batch (removed in 2025-03-26).",
+      "config_schema": {
+        "timeout":            {"type": "integer", "title": "Per-request timeout (s)", "default": 20, "minimum": 1, "maximum": 600},
+        "versions_to_test":   {"type": "array",   "title": "Versions to test", "default": [], "items": {"type": "string"}, "description": "Empty = use KNOWN_PROTOCOL_VERSIONS (2025-06-18, 2025-03-26, 2024-11-05, 2024-10-07, 0.1.0)"},
+        "test_batch":         {"type": "boolean", "title": "Test JSON-RPC batch", "default": true},
+        "test_reinit":        {"type": "boolean", "title": "Test mid-session re-init", "default": true},
+        "transport_override": {"type": "string",  "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
+      },
+      "default_config": {"timeout": 20, "versions_to_test": [], "test_batch": true, "test_reinit": true, "transport_override": ""},
+      "tags": ["mcp", "downgrade", "protocol", "server_side", "pro"],
+      "references": ["https://modelcontextprotocol.io/specification/2025-06-18/changelog"]
     }
   ]
 }

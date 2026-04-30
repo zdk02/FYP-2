@@ -31,9 +31,18 @@ def execute(target, params, context):
     oob_wait_seconds = int(params.get("oob_wait_seconds", 20))
     max_tools = int(params.get("max_tools", 20))
     only_tool_names = params.get("only_tool_names") or []
+    bypass_modes = params.get("bypass_modes") or ["ifs", "base64", "env"]
+    windows_payloads = bool(params.get("windows_payloads", True))
+    tool_keywords = params.get("tool_keywords") or list(_COMMAND_KEYWORDS)
+    protocol_version = params.get("protocol_version") or None
+    transport_override = params.get("transport_override") or None
 
     rb.info(f"Opening MCP session → {target.get('base_url') or target.get('host')}")
-    mcp = mcp_client.MCPClient.from_target(target, timeout=timeout)
+    mcp = mcp_client.MCPClient.from_target(
+        target, timeout=timeout,
+        protocol_version=protocol_version,
+        force_transport=transport_override,
+    )
     try:
         disc = mcp.discover()
         if not disc["initialized"]:
@@ -43,7 +52,7 @@ def execute(target, params, context):
         rb.info(f"Tools discovered: {len(tools)}")
 
         # Only tools whose names/descriptions hint at shell/filesystem/command flow
-        candidates = _pick_candidates(tools, only_tool_names)[:max_tools]
+        candidates = _pick_candidates(tools, only_tool_names, tool_keywords)[:max_tools]
         if not candidates:
             rb.warn("No plausible command-flow tools found. Use 'only_tool_names' to force.")
             return rb.finalize(success=True)
@@ -51,9 +60,16 @@ def execute(target, params, context):
         posix_blind = payloads.get("command_injection:blind", limit=3) \
                       or payloads.get("blind", limit=3)
         posix_blind = [p for p in posix_blind if "timing" in (p.get("tags") or [])]
-        win_blind = payloads.get("command_injection:blind", limit=6) or []
+        win_blind = payloads.get("command_injection:blind", limit=6) if windows_payloads else []
         oob_set = payloads.get("command_injection:oob", limit=4) or \
                   payloads.get("oob", limit=4)
+        # Pull encoding-bypass payloads when requested
+        bypass_payloads: list = []
+        if "ifs" in bypass_modes:
+            bypass_payloads += payloads.get("command_injection:bypass", limit=3) or []
+        if "base64" in bypass_modes:
+            bypass_payloads += payloads.get("command_injection:obfuscated", limit=3) or []
+        rb.info(f"Bypass modes: {bypass_modes} ({len(bypass_payloads)} payloads)")
 
         for tool in candidates:
             tname = tool.get("name")
@@ -131,18 +147,25 @@ _COMMAND_KEYWORDS = (
 )
 
 
-def _pick_candidates(tools, force_names):
+def _pick_candidates(tools, force_names, kw_override=None):
     if force_names:
         return [t for t in tools if t.get("name") in set(force_names)]
+    kws = kw_override or _COMMAND_KEYWORDS
     out = []
     for t in tools:
         blob = f"{t.get('name','')} {t.get('description','')}".lower()
-        if any(k in blob for k in _COMMAND_KEYWORDS):
+        if any(k in blob for k in kws):
             out.append(t)
-    # Fallback: if no keywords match, try all tools with string args
-    return out or [t for t in tools
-                   if any((p or {}).get("type") == "string"
-                          for p in ((t.get("inputSchema") or {}).get("properties") or {}).values())]
+    if out:
+        return out
+    # Fallback: only the first 3 tools with string args. Prevents
+    # multi-hour runs against MCP servers (GitHub, etc.) whose tools
+    # do not interact with shell / filesystem at all. Pentester can
+    # opt into broader sweep via `only_tool_names` or `tool_keywords`.
+    fallback = [t for t in tools
+                if any((p or {}).get("type") == "string"
+                       for p in ((t.get("inputSchema") or {}).get("properties") or {}).values())]
+    return fallback[:3]
 
 
 def _string_params(schema):

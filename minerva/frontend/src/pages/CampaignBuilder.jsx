@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,6 +22,7 @@ const steps = [
 
 export default function CampaignBuilder() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { id } = useParams()
   const [currentStep, setCurrentStep] = useState(0)
   const [formData, setFormData] = useState({
@@ -34,6 +35,10 @@ export default function CampaignBuilder() {
     rules_of_engagement: '',
     target_ids: [],
     attack_ids: [],
+    // Scan-phase config (encoded into scope_definition on submit)
+    run_scan_first: true,
+    auto_select_attacks_from_scan: true,
+    scan_plugins: ['client_vuln_scanner', 'server_vuln_scanner'],
   })
 
   // Fetch existing campaign if editing
@@ -65,7 +70,13 @@ export default function CampaignBuilder() {
     mutationFn: (data) => campaignsApi.create(data),
     onSuccess: (res) => {
       toast.success('Campaign created successfully')
-      navigate(`/campaigns/${res.id}`)
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] })
+      const newId = res?.campaign?.id || res?.id
+      if (newId) {
+        navigate(`/campaigns/${newId}`)
+      } else {
+        navigate('/campaigns')
+      }
     },
     onError: (err) => toast.error(err.response?.data?.error || 'Failed to create campaign'),
   })
@@ -90,7 +101,19 @@ export default function CampaignBuilder() {
   }
 
   const handleSubmit = () => {
-    createMutation.mutate(formData)
+    // Build the structured scope_definition so the backend can drive the
+    // scan phase. Free-form text is preserved under `notes`.
+    const scopePayload = {
+      notes: formData.scope || '',
+      phases: formData.run_scan_first ? ['scan', 'exploit'] : ['exploit'],
+      scan_plugins: formData.scan_plugins,
+      auto_select_attacks_from_scan: formData.auto_select_attacks_from_scan,
+    }
+    const submission = {
+      ...formData,
+      scope: scopePayload,
+    }
+    createMutation.mutate(submission)
   }
 
   const toggleTarget = (id) => {
@@ -231,6 +254,73 @@ export default function CampaignBuilder() {
                   value={formData.scope}
                   onChange={(e) => setFormData({ ...formData, scope: e.target.value })}
                 />
+              </div>
+
+              <div className="border border-dark-700 rounded-lg p-3 space-y-3 bg-dark-900/40">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-white">Reconnaissance phase</h3>
+                  <span className="text-[10px] uppercase tracking-wide text-dark-500">scan → exploit</span>
+                </div>
+                <p className="text-xs text-dark-400">
+                  Run vulnerability scanners against every target <em>before</em> launching attacks.
+                  Findings are recorded in the report alongside attack results.
+                </p>
+
+                <label className="flex items-start gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={formData.run_scan_first}
+                    onChange={(e) =>
+                      setFormData({ ...formData, run_scan_first: e.target.checked })
+                    }
+                  />
+                  <span>
+                    <span className="text-white">Run scanners first</span>
+                    <span className="block text-xs text-dark-500">
+                      Triggers <code>client_vuln_scanner</code> + <code>server_vuln_scanner</code> in a background thread when the campaign starts.
+                    </span>
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={formData.auto_select_attacks_from_scan}
+                    disabled={!formData.run_scan_first}
+                    onChange={(e) =>
+                      setFormData({ ...formData, auto_select_attacks_from_scan: e.target.checked })
+                    }
+                  />
+                  <span>
+                    <span className="text-white">Auto-select attacks from scan findings</span>
+                    <span className="block text-xs text-dark-500">
+                      If the scanner reports CWE-89 / CWE-918 / etc., the matching exploit attack is added to the campaign automatically.
+                    </span>
+                  </span>
+                </label>
+
+                {formData.run_scan_first && (
+                  <div className="space-y-1">
+                    <label className="text-xs text-dark-400">Scanner plugins (comma-separated)</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={(formData.scan_plugins || []).join(',')}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          scan_plugins: e.target.value
+                            .split(',')
+                            .map((s) => s.trim())
+                            .filter(Boolean),
+                        })
+                      }
+                      placeholder="client_vuln_scanner,server_vuln_scanner"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}

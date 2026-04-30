@@ -1,0 +1,119 @@
+###############################################################################
+# Minerva Plugin: MCP Server Vulnerability Scanner v1.0
+# Pillar: Server-Side
+# Architecture: Multi-Layer Verification (version + capability + active)
+###############################################################################
+
+id: server_vuln_scanner
+name: "MCP Server Vulnerability Scanner"
+version: "1.0.0"
+author: "Minerva Team"
+description: >
+  Enterprise-grade MCP **server** vulnerability scanner with three-layer
+  verification. Connects via the framework's MCPClient (any transport),
+  fingerprints the server through `initialize` / `serverInfo` and well-known
+  paths, then walks a YAML CVE database. Each finding includes a confidence
+  score based on how many layers confirmed it. Fully YAML-driven — add new
+  servers, CVEs, capability rules, and verification probes without code
+  changes.
+
+pillar: server
+category: reconnaissance
+subcategory: vulnerability_scanning
+severity: high
+attack_type: scanner
+
+tags:
+  - mcp
+  - server
+  - cve
+  - fingerprint
+  - version-detection
+  - active-verification
+  - vulnerability-scanner
+
+config_schema:
+  timeout:
+    type: integer
+    default: 30
+    description: "Per-request timeout in seconds"
+  scan_depth:
+    type: string
+    default: "full"
+    enum: ["quick", "standard", "full"]
+    description: >
+      quick    = Layer 1 only (fingerprint + version match)
+      standard = Layer 1 + 2 (+ capability / config / auth checks)
+      full     = Layer 1 + 2 + 3 (+ active verification probes through MCP)
+  server_hint:
+    type: string
+    default: "auto"
+    description: >
+      'auto' fingerprints against every server in the database.
+      Comma-separated keys force a subset (e.g. 'github_mcp,server_filesystem').
+  audit_capabilities:
+    type: boolean
+    default: true
+    description: "Audit advertised serverCapabilities for misuse (e.g. server claiming sampling/elicitation)"
+  audit_tools:
+    type: boolean
+    default: true
+    description: "Audit tools/list output for high-risk tools (eval, shell, fetch_url, etc.)"
+  audit_auth:
+    type: boolean
+    default: true
+    description: "Probe whether the server enforces authentication (no-auth initialize differential)"
+  audit_protocol_versions:
+    type: boolean
+    default: true
+    description: "Probe which MCP protocol versions are accepted (downgrade risk)"
+  protocol_version:
+    type: string
+    default: ""
+    description: "Pin a specific protocol version, e.g. 2025-06-18. Empty = framework default."
+  transport_override:
+    type: string
+    default: ""
+    enum: ["", "http", "sse", "ws", "stdio"]
+    description: "Force a transport. Empty = auto-detect from target."
+  min_severity:
+    type: string
+    default: "low"
+    enum: ["critical", "high", "medium", "low"]
+    description: "Minimum CVE severity to include in findings"
+  min_confidence:
+    type: string
+    default: "low"
+    enum: ["confirmed", "high", "medium", "low"]
+    description: >
+      confirmed = active probe succeeded
+      high      = version match + capability/auth confirms
+      medium    = version match only
+      low       = server detected but version unknown
+
+default_config:
+  timeout: 30
+  scan_depth: "full"
+  server_hint: "auto"
+  audit_capabilities: true
+  audit_tools: true
+  audit_auth: true
+  audit_protocol_versions: true
+  protocol_version: ""
+  transport_override: ""
+  min_severity: "low"
+  min_confidence: "low"
+
+prerequisites: >
+  cve_database.yaml in same directory. The framework's MCPClient + payload
+  library are imported at runtime. Network access to the target MCP server.
+
+script_language: python
+script_file: server_vuln_scanner.py
+
+data_files:
+  - cve_database.yaml
+
+mitre_attack:
+  tactics: [TA0043, TA0007]
+  techniques: [T1592, T1518]

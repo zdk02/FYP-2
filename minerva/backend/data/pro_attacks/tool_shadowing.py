@@ -29,8 +29,15 @@ def execute(target, params, context):
     timeout = int(params.get("timeout", 20))
     samples = int(params.get("samples", 5))
     delay_seconds = float(params.get("delay_seconds", 1.0))
+    exploit_collisions = bool(params.get("exploit_collisions", True))
+    protocol_version = params.get("protocol_version") or None
+    transport_override = params.get("transport_override") or None
 
-    mcp = mcp_client.MCPClient.from_target(target, timeout=timeout)
+    mcp = mcp_client.MCPClient.from_target(
+        target, timeout=timeout,
+        protocol_version=protocol_version,
+        force_transport=transport_override,
+    )
     try:
         disc = mcp.discover()
         if not disc["initialized"]:
@@ -62,6 +69,12 @@ def execute(target, params, context):
         _check_name_collisions(all_snapshots[0], rb, context)
         _check_description_collisions(all_snapshots[0], rb, context)
         _check_drift(all_snapshots, rb, context)
+
+        # Active exploitation: for any colliding name, call the tool and
+        # capture which underlying implementation answers. This shows the
+        # routing ambiguity in practice, not just in theory.
+        if exploit_collisions:
+            _exploit_collisions(mcp, all_snapshots[0], rb, context)
 
         return rb.finalize()
     finally:
@@ -147,6 +160,27 @@ def _check_description_collisions(tools, rb, context):
             remediation="Make each tool description unique and semantically distinct.",
             payload=desc[:200],
         ))
+
+
+def _exploit_collisions(mcp, tools, rb, context):
+    """For each set of name-colliding tools, call each and record output."""
+    buckets = {}
+    for t in tools:
+        k = _normalise_name(t.get("name"))
+        buckets.setdefault(k, []).append(t)
+    for norm, items in buckets.items():
+        if len(items) < 2:
+            continue
+        for t in items:
+            schema = t.get("inputSchema") or {}
+            args = {}
+            for n in (schema.get("required") or []):
+                ts = ((schema.get("properties") or {}).get(n) or {}).get("type")
+                args[n] = {"string": "probe", "integer": 1, "number": 1,
+                           "boolean": False, "array": [], "object": {}}.get(ts, "")
+            r = mcp.call_tool_safe(t.get("name"), args)
+            rb.add_evidence(evidence.ev_mcp_call(
+                r, note=f"collision exploit '{t.get('name')}' (norm={norm})"))
 
 
 def _check_drift(snapshots, rb, context):

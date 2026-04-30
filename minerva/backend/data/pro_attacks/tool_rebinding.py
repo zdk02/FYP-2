@@ -26,8 +26,16 @@ def execute(target, params, context):
     )
     timeout = int(params.get("timeout", 20))
     call_tools = bool(params.get("call_tools", True))
+    max_tools = int(params.get("max_tools", 10))
+    exercise_delay = float(params.get("exercise_delay", 0.5))
+    protocol_version = params.get("protocol_version") or None
+    transport_override = params.get("transport_override") or None
 
-    mcp = mcp_client.MCPClient.from_target(target, timeout=timeout)
+    mcp = mcp_client.MCPClient.from_target(
+        target, timeout=timeout,
+        protocol_version=protocol_version,
+        force_transport=transport_override,
+    )
     try:
         disc = mcp.discover()
         if not disc["initialized"]:
@@ -49,7 +57,7 @@ def execute(target, params, context):
 
         # Exercise each tool with a benign call (if allowed)
         if call_tools:
-            for t in before[:10]:
+            for t in before[:max_tools]:
                 name = t.get("name")
                 if not name:
                     continue
@@ -59,7 +67,7 @@ def execute(target, params, context):
                     note=f"benign call {name} (rebinding probe)"))
 
         # Small delay — some servers rotate manifests periodically
-        _time.sleep(0.5)
+        _time.sleep(exercise_delay)
 
         after_resp = mcp.tools_list()
         rb.add_evidence(evidence.ev_mcp_call(after_resp,

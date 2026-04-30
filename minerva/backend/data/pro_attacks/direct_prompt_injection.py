@@ -28,12 +28,20 @@ def execute(target, params, context):
     )
     timeout = int(params.get("timeout", 30))
     max_tools = int(params.get("max_tools", 20))
-    max_payloads = int(params.get("max_payloads", 8))
-    allow_tools = params.get("allow_tools") or []   # whitelist
-    block_tools = params.get("block_tools") or []   # explicit skip
+    max_payloads = int(params.get("max_payloads", 12))
+    max_params_per_tool = int(params.get("max_params_per_tool", 3))
+    allow_tools = params.get("allow_tools") or []
+    block_tools = params.get("block_tools") or []
+    payload_tags = params.get("payload_tags") or []
+    protocol_version = params.get("protocol_version") or None
+    transport_override = params.get("transport_override") or None
 
     rb.info(f"Opening MCP session → {target.get('base_url') or target.get('host')}")
-    mcp = mcp_client.MCPClient.from_target(target, timeout=timeout)
+    mcp = mcp_client.MCPClient.from_target(
+        target, timeout=timeout,
+        protocol_version=protocol_version,
+        force_transport=transport_override,
+    )
     try:
         disc = mcp.discover()
         rb.add_evidence(evidence.ev_mcp_call(disc["raw"]["initialize"],
@@ -49,8 +57,12 @@ def execute(target, params, context):
             rb.warn("Target has no tools — nothing to test.")
             return rb.finalize(success=True)
 
-        # Pick payload set
-        corpus = payloads.get("prompt_injection", limit=max_payloads) or []
+        # Pick payload set — supports tag filtering for fine-grained UI control
+        if payload_tags:
+            tag_query = ":".join(["prompt_injection"] + list(payload_tags))
+            corpus = payloads.get(tag_query, limit=max_payloads) or []
+        else:
+            corpus = payloads.get("prompt_injection", limit=max_payloads) or []
         if not corpus:
             rb.warn("payload_library returned no 'prompt_injection' payloads.")
             return rb.finalize(success=False)
@@ -69,7 +81,7 @@ def execute(target, params, context):
                 rb.info(f"Tool '{tname}' has no string parameters — skipped.")
                 continue
 
-            for param_name in str_params:
+            for param_name in str_params[:max_params_per_tool]:
                 for p in corpus:
                     canary = "MINERVA_PWN_" + uuid.uuid4().hex[:12]
                     payload_str = str(p["content"]).replace("{CANARY}", canary)
