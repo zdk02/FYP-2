@@ -1,0 +1,14 @@
+
+> aegis-frontend@1.0.0 test:performance
+> playwright test --config=playwright.performance.config.js
+
+
+Running 3 tests using 1 worker
+
+[perf:fe] /login domContentLoaded=930ms load=932ms transfer=1371B
+  ok 1 [chromium] › tests\performance\page-load.spec.js:47:3 › Page-load performance — login page (cold load) › login page DOMContentLoaded is under 4 seconds (1.2s)
+  ok 2 [chromium] › tests\performance\page-load.spec.js:62:3 › Page-load performance — login page (cold load) › login page fully loaded is under 6 seconds (1.3s)
+[perf:fe] login flow elapsed=1828ms
+  ok 3 [chromium] › tests\performance\page-load.spec.js:71:3 › Page-load performance — login → dashboard navigation › login flow completes within 5 seconds end-to-end (1.9s)
+
+  3 passed (5.6s)

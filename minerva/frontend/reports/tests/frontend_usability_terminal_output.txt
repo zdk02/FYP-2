@@ -1,0 +1,21 @@
+
+> aegis-frontend@1.0.0 test:usability
+> playwright test --config=playwright.usability.config.js
+
+
+Running 7 tests using 1 worker
+
+[a11y:login] critical=0 serious=0 total=0 passes=10
+  ok 1 [chromium] › tests\usability\accessibility.spec.js:95:3 › Accessibility — public pages › login page has no critical or serious violations (2.1s)
+[a11y:dashboard] critical=0 serious=0 total=0 passes=17
+  ok 2 [chromium] › tests\usability\accessibility.spec.js:103:3 › Accessibility — authenticated pages › dashboard has no critical or serious violations (2.5s)
+[a11y:targets] critical=0 serious=0 total=0 passes=17
+  ok 3 [chromium] › tests\usability\accessibility.spec.js:108:3 › Accessibility — authenticated pages › targets page has no critical or serious violations (3.2s)
+[a11y:attacks] critical=0 serious=0 total=0 passes=18
+  ok 4 [chromium] › tests\usability\accessibility.spec.js:115:3 › Accessibility — authenticated pages › attacks page has no critical or serious violations (3.2s)
+[a11y:settings] critical=0 serious=0 total=0 passes=17
+  ok 5 [chromium] › tests\usability\accessibility.spec.js:122:3 › Accessibility — authenticated pages › settings page has no critical or serious violations (3.2s)
+  ok 6 [chromium] › tests\usability\accessibility.spec.js:132:3 › Keyboard navigation — login form › Tab traverses email -> password -> submit (1.6s)
+  ok 7 [chromium] › tests\usability\accessibility.spec.js:148:3 › Keyboard navigation — login form › Enter submits the login form (2.1s)
+
+  7 passed (19.6s)

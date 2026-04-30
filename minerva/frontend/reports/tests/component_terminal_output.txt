@@ -1,0 +1,17 @@
+
+> aegis-frontend@1.0.0 test:component
+> vitest run tests/component --outputFile.html=./reports/tests/frontend_component_test_report/index.html
+
+
+ RUN  v4.1.5 C:/Users/Zeinab/Downloads/FYP/minerva/minerva/frontend
+
+ ✓ tests/component/CheckBuilder.test.jsx (10 tests) 319ms
+ ✓ tests/component/FindingsTable.test.jsx (16 tests) 378ms
+
+ Test Files  2 passed (2)
+      Tests  26 passed (26)
+   Start at  14:51:36
+   Duration  2.50s (transform 162ms, setup 578ms, import 373ms, tests 697ms, environment 2.84s)
+
+ HTML  Report is generated
+       You can run npx vite preview --outDir reports/tests/frontend_component_test_report to see the test results.

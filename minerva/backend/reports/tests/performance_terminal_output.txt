@@ -1,0 +1,32 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.4, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\Zeinab\Downloads\FYP\minerva\venv312\Scripts\python.exe
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.4', 'Platform': 'Windows-11-10.0.26200-SP0', 'Packages': {'pytest': '9.0.3', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.2.0', 'html': '4.2.0', 'metadata': '3.1.1'}, 'JAVA_HOME': 'C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.23.9-hotspot\\'}
+rootdir: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend
+configfile: pytest.ini
+plugins: anyio-4.2.0, html-4.2.0, metadata-3.1.1
+collecting ... collected 9 items
+
+tests/performance/test_response_times.py::TestEndpointResponseTimes::test_health_endpoint_is_fast [perf] GET /health/ready              p50=   0.25ms p95=   0.34ms max=   1.13ms (threshold 50ms) OK
+PASSED
+tests/performance/test_response_times.py::TestEndpointResponseTimes::test_login_under_500ms_p95_despite_bcrypt [perf] POST /auth/login               p50= 145.55ms p95= 149.55ms max= 154.23ms (threshold 500ms) OK
+PASSED
+tests/performance/test_response_times.py::TestEndpointResponseTimes::test_me_endpoint_under_100ms_p95 [perf] GET /auth/me                   p50=   0.92ms p95=   1.23ms max=   2.41ms (threshold 100ms) OK
+PASSED
+tests/performance/test_response_times.py::TestEndpointResponseTimes::test_list_targets_empty_under_50ms_p95 [perf] GET /targets (empty)           p50=   1.31ms p95=   1.56ms max=   6.43ms (threshold 50ms) OK
+PASSED
+tests/performance/test_response_times.py::TestEndpointResponseTimes::test_list_attacks_under_50ms_p95 [perf] GET /attacks                   p50=   1.56ms p95=   2.03ms max=   8.45ms (threshold 50ms) OK
+PASSED
+tests/performance/test_response_times.py::TestEndpointResponseTimes::test_attacks_metadata_endpoints_are_fast [perf] GET /attacks/severities        p50=   0.42ms p95=   0.57ms max=   0.99ms (threshold 20ms) OK
+[perf] GET /attacks/types             p50=   0.40ms p95=   0.49ms max=   0.62ms (threshold 20ms) OK
+[perf] GET /attacks/languages         p50=   0.40ms p95=   0.59ms max=   0.99ms (threshold 20ms) OK
+PASSED
+tests/performance/test_response_times.py::TestSeededDatabaseScalesLinearly::test_listing_50_targets_still_fast [perf] GET /targets (50 rows)         p50=   1.54ms p95=   1.60ms max=   1.82ms (threshold 100ms) OK
+PASSED
+tests/performance/test_throughput.py::TestConcurrentReads::test_health_endpoint_handles_200_concurrent_requests [perf] /health  total=200 concurrency=10 elapsed=0.128s rps=1563.3 success=1.0
+PASSED
+tests/performance/test_throughput.py::TestConcurrentReads::test_serial_throughput_for_authenticated_endpoint [perf] /targets serial total=100 elapsed=0.120s rps=835.4 success=1.000
+PASSED
+
+- Generated html report: file:///C:/Users/Zeinab/Downloads/FYP/minerva/minerva/backend/reports/tests/performance_test_report.html -
+============================== 9 passed in 4.81s ==============================

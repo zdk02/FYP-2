@@ -1,0 +1,39 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.4, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\Zeinab\Downloads\FYP\minerva\venv312\Scripts\python.exe
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.4', 'Platform': 'Windows-11-10.0.26200-SP0', 'Packages': {'pytest': '9.0.3', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.2.0', 'html': '4.2.0', 'metadata': '3.1.1'}, 'JAVA_HOME': 'C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.23.9-hotspot\\'}
+rootdir: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend
+configfile: pytest.ini
+plugins: anyio-4.2.0, html-4.2.0, metadata-3.1.1
+collecting ... collected 28 items
+
+tests/database/test_relationships.py::TestUserAuditLogRelationship::test_user_can_have_multiple_audit_logs PASSED [  3%]
+tests/database/test_relationships.py::TestUserAuditLogRelationship::test_audit_log_action_is_required PASSED [  7%]
+tests/database/test_relationships.py::TestUserAuditLogRelationship::test_audit_log_user_id_is_optional PASSED [ 10%]
+tests/database/test_relationships.py::TestTargetEndpointCascade::test_endpoints_can_be_attached_to_a_target PASSED [ 14%]
+tests/database/test_relationships.py::TestTargetEndpointCascade::test_deleting_target_cascades_to_its_endpoints PASSED [ 17%]
+tests/database/test_relationships.py::TestTargetEndpointCascade::test_endpoint_requires_a_target_id PASSED [ 21%]
+tests/database/test_target_model.py::TestTargetRequiredFields::test_missing_name_raises_integrity_error PASSED [ 25%]
+tests/database/test_target_model.py::TestTargetRequiredFields::test_missing_target_type_raises_integrity_error PASSED [ 28%]
+tests/database/test_target_model.py::TestTargetDefaults::test_id_is_auto_assigned_uuid PASSED [ 32%]
+tests/database/test_target_model.py::TestTargetDefaults::test_is_active_defaults_to_true PASSED [ 35%]
+tests/database/test_target_model.py::TestTargetDefaults::test_created_at_is_auto_populated PASSED [ 39%]
+tests/database/test_target_model.py::TestTargetDefaults::test_updated_at_changes_on_update PASSED [ 42%]
+tests/database/test_target_model.py::TestTargetJsonRoundTrip::test_auth_config_json_persists_and_parses_back PASSED [ 46%]
+tests/database/test_target_model.py::TestTargetJsonRoundTrip::test_tags_json_array_round_trips PASSED [ 50%]
+tests/database/test_user_model.py::TestUserUniqueness::test_duplicate_username_raises_integrity_error PASSED [ 53%]
+tests/database/test_user_model.py::TestUserUniqueness::test_duplicate_email_raises_integrity_error PASSED [ 57%]
+tests/database/test_user_model.py::TestUserRequiredFields::test_missing_username_raises_integrity_error PASSED [ 60%]
+tests/database/test_user_model.py::TestUserRequiredFields::test_missing_email_raises_integrity_error PASSED [ 64%]
+tests/database/test_user_model.py::TestUserRequiredFields::test_missing_password_hash_raises_integrity_error PASSED [ 67%]
+tests/database/test_user_model.py::TestUserDefaults::test_id_is_auto_assigned_uuid_string PASSED [ 71%]
+tests/database/test_user_model.py::TestUserDefaults::test_role_defaults_to_operator_when_omitted PASSED [ 75%]
+tests/database/test_user_model.py::TestUserDefaults::test_is_active_defaults_to_true PASSED [ 78%]
+tests/database/test_user_model.py::TestUserDefaults::test_created_at_is_auto_populated PASSED [ 82%]
+tests/database/test_user_model.py::TestUserDefaults::test_last_login_is_nullable PASSED [ 85%]
+tests/database/test_user_model.py::TestPasswordHashing::test_set_password_does_not_store_plaintext PASSED [ 89%]
+tests/database/test_user_model.py::TestPasswordHashing::test_check_password_returns_true_for_correct_password PASSED [ 92%]
+tests/database/test_user_model.py::TestPasswordHashing::test_check_password_returns_false_for_wrong_password PASSED [ 96%]
+tests/database/test_user_model.py::TestPasswordHashing::test_two_users_with_same_password_have_different_hashes PASSED [100%]
+
+============================= 28 passed in 13.42s =============================

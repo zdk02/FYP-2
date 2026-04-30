@@ -1,0 +1,17 @@
+
+> aegis-frontend@1.0.0 test:security
+> vitest run tests/security --outputFile.html=./reports/tests/frontend_security_test_report/index.html
+
+
+ RUN  v4.1.5 C:/Users/Zeinab/Downloads/FYP/minerva/minerva/frontend
+
+ ✓ tests/security/auth-storage.test.js (7 tests) 26ms
+ ✓ tests/security/xss-rendering.test.jsx (8 tests) 350ms
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  16:14:50
+   Duration  3.43s (transform 221ms, setup 768ms, import 363ms, tests 376ms, environment 4.18s)
+
+ HTML  Report is generated
+       You can run npx vite preview --outDir reports/tests/frontend_security_test_report to see the test results.

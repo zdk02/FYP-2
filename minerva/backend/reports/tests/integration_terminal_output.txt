@@ -1,0 +1,54 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.4, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\Zeinab\Downloads\FYP\minerva\venv312\Scripts\python.exe
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.4', 'Platform': 'Windows-11-10.0.26200-SP0', 'Packages': {'pytest': '9.0.3', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.2.0', 'html': '4.2.0', 'metadata': '3.1.1'}, 'JAVA_HOME': 'C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.23.9-hotspot\\'}
+rootdir: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend
+configfile: pytest.ini
+plugins: anyio-4.2.0, html-4.2.0, metadata-3.1.1
+collecting ... collected 43 items
+
+tests/integration/test_attacks_listing.py::TestListAttacks::test_unauthenticated_request_is_rejected PASSED [  2%]
+tests/integration/test_attacks_listing.py::TestListAttacks::test_authenticated_request_returns_200_and_a_list PASSED [  4%]
+tests/integration/test_attacks_listing.py::TestListAttacks::test_severity_filter_is_accepted PASSED [  6%]
+tests/integration/test_attacks_listing.py::TestListAttacks::test_search_filter_is_accepted PASSED [  9%]
+tests/integration/test_attacks_listing.py::TestListAttacks::test_unknown_attack_id_returns_404 PASSED [ 11%]
+tests/integration/test_attacks_listing.py::TestAttackMetadataEndpoints::test_severities_endpoint_returns_list PASSED [ 13%]
+tests/integration/test_attacks_listing.py::TestAttackMetadataEndpoints::test_types_endpoint_returns_list PASSED [ 16%]
+tests/integration/test_attacks_listing.py::TestAttackMetadataEndpoints::test_languages_endpoint_returns_list PASSED [ 18%]
+tests/integration/test_auth_flow.py::TestLogin::test_login_with_correct_credentials_returns_tokens PASSED [ 20%]
+tests/integration/test_auth_flow.py::TestLogin::test_login_accepts_username_field PASSED [ 23%]
+tests/integration/test_auth_flow.py::TestLogin::test_login_with_wrong_password_returns_401 PASSED [ 25%]
+tests/integration/test_auth_flow.py::TestLogin::test_login_with_unknown_email_returns_401 PASSED [ 27%]
+tests/integration/test_auth_flow.py::TestLogin::test_login_without_password_returns_400 PASSED [ 30%]
+tests/integration/test_auth_flow.py::TestLogin::test_login_with_empty_payload_returns_400 PASSED [ 32%]
+tests/integration/test_auth_flow.py::TestMeEndpoint::test_me_returns_user_info_with_valid_token PASSED [ 34%]
+tests/integration/test_auth_flow.py::TestMeEndpoint::test_me_without_token_returns_401 PASSED [ 37%]
+tests/integration/test_auth_flow.py::TestMeEndpoint::test_me_with_garbage_token_returns_422 PASSED [ 39%]
+tests/integration/test_auth_flow.py::TestRefresh::test_refresh_token_yields_new_access_token PASSED [ 41%]
+tests/integration/test_auth_flow.py::TestRefresh::test_refresh_with_access_token_is_rejected PASSED [ 44%]
+tests/integration/test_auth_flow.py::TestLogout::test_logout_with_valid_token_returns_200 PASSED [ 46%]
+tests/integration/test_auth_flow.py::TestLogout::test_logout_without_token_returns_401 PASSED [ 48%]
+tests/integration/test_auth_flow.py::TestChangePassword::test_change_password_succeeds_with_correct_current_password PASSED [ 51%]
+tests/integration/test_auth_flow.py::TestChangePassword::test_change_password_with_wrong_current_returns_400 PASSED [ 53%]
+tests/integration/test_auth_flow.py::TestChangePassword::test_change_password_without_token_returns_401 PASSED [ 55%]
+tests/integration/test_health.py::TestHealthEndpoints::test_readiness_endpoint_returns_200 PASSED [ 58%]
+tests/integration/test_health.py::TestHealthEndpoints::test_unknown_route_returns_404 PASSED [ 60%]
+tests/integration/test_targets_crud.py::TestListTargets::test_unauthenticated_request_is_rejected PASSED [ 62%]
+tests/integration/test_targets_crud.py::TestListTargets::test_empty_db_returns_empty_list_or_paged_envelope PASSED [ 65%]
+tests/integration/test_targets_crud.py::TestCreateTarget::test_create_target_with_valid_payload_returns_201 PASSED [ 67%]
+tests/integration/test_targets_crud.py::TestCreateTarget::test_created_target_appears_in_list PASSED [ 69%]
+tests/integration/test_targets_crud.py::TestCreateTarget::test_create_target_without_name_returns_400 PASSED [ 72%]
+tests/integration/test_targets_crud.py::TestCreateTarget::test_create_http_target_without_host_returns_400 PASSED [ 74%]
+tests/integration/test_targets_crud.py::TestCreateTarget::test_stdio_target_requires_base_url PASSED [ 76%]
+tests/integration/test_targets_crud.py::TestCreateTarget::test_stdio_target_with_base_url_succeeds PASSED [ 79%]
+tests/integration/test_targets_crud.py::TestCreateTarget::test_create_target_without_token_returns_401 PASSED [ 81%]
+tests/integration/test_targets_crud.py::TestGetSingleTarget::test_get_existing_target_returns_full_record PASSED [ 83%]
+tests/integration/test_targets_crud.py::TestGetSingleTarget::test_get_unknown_target_returns_404 PASSED [ 86%]
+tests/integration/test_targets_crud.py::TestUpdateTarget::test_update_target_changes_persist PASSED [ 88%]
+tests/integration/test_targets_crud.py::TestDeleteTarget::test_admin_can_delete_target PASSED [ 90%]
+tests/integration/test_targets_crud.py::TestDeleteTarget::test_viewer_cannot_delete_target PASSED [ 93%]
+tests/integration/test_targets_crud.py::TestDeleteTarget::test_delete_unknown_target_returns_404 PASSED [ 95%]
+tests/integration/test_targets_crud.py::TestTargetMetadataEndpoints::test_target_types_endpoint_returns_list PASSED [ 97%]
+tests/integration/test_targets_crud.py::TestTargetMetadataEndpoints::test_environments_endpoint_returns_list PASSED [100%]
+
+============================= 43 passed in 19.21s =============================

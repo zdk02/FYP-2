@@ -7,7 +7,23 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:unit": "vitest run tests/unit",
+    "test:component": "vitest run tests/component --outputFile.html=./reports/tests/frontend_component_test_report/index.html",
+    "test:security": "vitest run tests/security --outputFile.html=./reports/tests/frontend_security_test_report/index.html",
+    "test:stress": "vitest run tests/stress --outputFile.html=./reports/tests/frontend_stress_test_report/index.html",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report ./reports/tests/frontend_e2e_test_report",
+    "test:usability": "playwright test --config=playwright.usability.config.js",
+    "test:usability:report": "playwright show-report ./reports/tests/frontend_usability_test_report",
+    "test:performance": "playwright test --config=playwright.performance.config.js",
+    "test:performance:report": "playwright show-report ./reports/tests/frontend_performance_test_report",
+    "test:compatibility": "playwright test --config=playwright.compatibility.config.js",
+    "test:compatibility:report": "playwright show-report ./reports/tests/frontend_compatibility_test_report"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.12.2",
@@ -24,16 +40,24 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
+    "@playwright/test": "^1.59.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/ui": "^4.1.5",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.53.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.4",
+    "jsdom": "^29.1.1",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6",
-    "vite": "^8.0.9"
+    "vite": "^8.0.9",
+    "vitest": "^4.1.5"
   }
 }

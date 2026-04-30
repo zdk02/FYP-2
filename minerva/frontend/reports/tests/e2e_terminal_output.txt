@@ -1,0 +1,16 @@
+
+Running 11 tests using 1 worker
+
+  ok  1 [chromium] › tests\e2e\login.spec.js:25:3 › Login journey › shows the sign-in form on /login (3.1s)
+  ok  2 [chromium] › tests\e2e\login.spec.js:33:3 › Login journey › redirects unauthenticated visits to /login (2.2s)
+  ok  3 [chromium] › tests\e2e\login.spec.js:38:3 › Login journey › rejects invalid credentials and stays on /login (3.0s)
+  ok  4 [chromium] › tests\e2e\login.spec.js:57:3 › Login journey › logs in with admin credentials and lands on the dashboard (2.4s)
+  ok  5 [chromium] › tests\e2e\login.spec.js:68:3 › Login journey › persists session across a page reload (3.1s)
+  ok  6 [chromium] › tests\e2e\navigation.spec.js:26:3 › Authenticated navigation › navigates from dashboard to Targets page (2.9s)
+  ok  7 [chromium] › tests\e2e\navigation.spec.js:33:3 › Authenticated navigation › navigates to Attacks page (3.2s)
+  ok  8 [chromium] › tests\e2e\navigation.spec.js:39:3 › Authenticated navigation › navigates to Reports page (3.2s)
+  ok  9 [chromium] › tests\e2e\navigation.spec.js:45:3 › Authenticated navigation › navigates to Scanners page (2.9s)
+  ok 10 [chromium] › tests\e2e\navigation.spec.js:51:3 › Authenticated navigation › navigates to Settings page (2.7s)
+  ok 11 [chromium] › tests\e2e\navigation.spec.js:57:3 › Authenticated navigation › unknown route redirects to dashboard (3.0s)
+
+  11 passed (33.8s)

@@ -1,0 +1,33 @@
+
+> aegis-frontend@1.0.0 test:compatibility
+> playwright test --config=playwright.compatibility.config.js
+
+
+Running 12 tests using 1 worker
+
+[compat:chromium] login + dashboard render OK
+  ok  1 [chromium] › tests\compatibility\smoke.spec.js:25:3 › Cross-browser smoke › login form renders and submits (2.7s)
+[compat:chromium] /targets page OK
+  ok  2 [chromium] › tests\compatibility\smoke.spec.js:43:3 › Cross-browser smoke › navigates to Targets page from dashboard (3.3s)
+[compat:chromium] route protection OK
+  ok  3 [chromium] › tests\compatibility\smoke.spec.js:58:3 › Cross-browser smoke › protected route redirects to /login when unauthenticated (2.0s)
+[compat:firefox] login + dashboard render OK
+  ok  4 [firefox] › tests\compatibility\smoke.spec.js:25:3 › Cross-browser smoke › login form renders and submits (7.8s)
+[compat:firefox] /targets page OK
+  ok  5 [firefox] › tests\compatibility\smoke.spec.js:43:3 › Cross-browser smoke › navigates to Targets page from dashboard (8.0s)
+[compat:firefox] route protection OK
+  ok  6 [firefox] › tests\compatibility\smoke.spec.js:58:3 › Cross-browser smoke › protected route redirects to /login when unauthenticated (6.0s)
+[compat:webkit] login + dashboard render OK
+  ok  7 [webkit] › tests\compatibility\smoke.spec.js:25:3 › Cross-browser smoke › login form renders and submits (4.3s)
+[compat:webkit] /targets page OK
+  ok  8 [webkit] › tests\compatibility\smoke.spec.js:43:3 › Cross-browser smoke › navigates to Targets page from dashboard (4.1s)
+[compat:webkit] route protection OK
+  ok  9 [webkit] › tests\compatibility\smoke.spec.js:58:3 › Cross-browser smoke › protected route redirects to /login when unauthenticated (2.0s)
+[compat:mobile-iphone-13] login + dashboard render OK
+  ok 10 [mobile-iphone-13] › tests\compatibility\smoke.spec.js:25:3 › Cross-browser smoke › login form renders and submits (3.5s)
+[compat:mobile-iphone-13] /targets page OK
+  ok 11 [mobile-iphone-13] › tests\compatibility\smoke.spec.js:43:3 › Cross-browser smoke › navigates to Targets page from dashboard (4.9s)
+[compat:mobile-iphone-13] route protection OK
+  ok 12 [mobile-iphone-13] › tests\compatibility\smoke.spec.js:58:3 › Cross-browser smoke › protected route redirects to /login when unauthenticated (2.3s)
+
+  12 passed (59.2s)

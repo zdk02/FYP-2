@@ -1,0 +1,25 @@
+
+> aegis-frontend@1.0.0 test:stress
+> vitest run tests/stress --outputFile.html=./reports/tests/frontend_stress_test_report/index.html
+
+
+ RUN  v4.1.5 C:/Users/Zeinab/Downloads/FYP/minerva/minerva/frontend
+
+stdout | tests/stress/large-list-rendering.test.jsx:34:3 > <FindingsTable /> — stress: large lists > renders 500 findings within 1.5 seconds
+[stress:fe] rendered 500 findings in 643ms
+
+stdout | tests/stress/large-list-rendering.test.jsx:50:3 > <FindingsTable /> — stress: large lists > renders 1000 findings within 3 seconds
+[stress:fe] rendered 1000 findings in 894ms
+
+ ✓ tests/stress/large-list-rendering.test.jsx (3 tests) 5398ms
+     ✓ renders 500 findings within 1.5 seconds  1157ms
+     ✓ renders 1000 findings within 3 seconds  1302ms
+     ✓ expand-collapse still works on a row deep in a 1000-row list  2934ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  16:53:30
+   Duration  8.10s (transform 121ms, setup 357ms, import 196ms, tests 5.40s, environment 1.84s)
+
+ HTML  Report is generated
+       You can run npx vite preview --outDir reports/tests/frontend_stress_test_report to see the test results.

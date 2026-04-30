@@ -1,0 +1,26 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.4, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\Zeinab\Downloads\FYP\minerva\venv312\Scripts\python.exe
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.4', 'Platform': 'Windows-11-10.0.26200-SP0', 'Packages': {'pytest': '9.0.3', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.2.0', 'html': '4.2.0', 'metadata': '3.1.1'}, 'JAVA_HOME': 'C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.23.9-hotspot\\'}
+rootdir: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend
+configfile: pytest.ini
+plugins: anyio-4.2.0, html-4.2.0, metadata-3.1.1
+collecting ... collected 10 items
+
+tests/stress/test_burst_load.py::TestBurstLoadOnHealth::test_1000_burst_health_requests_succeed [stress] /health burst total=1000 elapsed=0.40s rps=2518 success=1.000
+PASSED
+tests/stress/test_burst_load.py::TestBurstLoadOnAuthenticatedEndpoint::test_500_burst_targets_requests_stay_functional [stress] /targets burst total=500 elapsed=0.92s rps=542 success=1.000 p99=3.03ms
+PASSED
+tests/stress/test_burst_load.py::TestRapidLoginBurstDoesNotCrash::test_30_consecutive_logins_all_succeed [stress] /auth/login burst total=30 elapsed=6.21s rps=4.8 success=1.000
+PASSED
+tests/stress/test_large_dataset.py::TestListingWith500Targets::test_seed_500_targets_then_list_under_1_second [stress] seeded 500 targets in 1.21s, list returned 20 items in 4.79ms
+PASSED
+tests/stress/test_large_dataset.py::TestListingWith500Targets::test_search_filter_still_fast_with_500_rows [stress] search across 500 rows: 5.90ms
+PASSED
+tests/stress/test_large_payloads.py::TestOversizedTargetFields::test_10kb_target_name_is_handled_gracefully PASSED
+tests/stress/test_large_payloads.py::TestOversizedTargetFields::test_100kb_description_is_handled_gracefully PASSED
+tests/stress/test_large_payloads.py::TestOversizedTargetFields::test_1mb_payload_does_not_crash_server PASSED
+tests/stress/test_large_payloads.py::TestDeeplyNestedJson::test_deeply_nested_auth_config_does_not_crash PASSED
+tests/stress/test_large_payloads.py::TestManyQueryParams::test_50_query_params_does_not_break_listing PASSED
+
+============================= 10 passed in 10.97s =============================

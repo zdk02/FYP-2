@@ -1,0 +1,53 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.4, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\Zeinab\Downloads\FYP\minerva\venv312\Scripts\python.exe
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.4', 'Platform': 'Windows-11-10.0.26200-SP0', 'Packages': {'pytest': '9.0.3', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.2.0', 'html': '4.2.0', 'metadata': '3.1.1'}, 'JAVA_HOME': 'C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.23.9-hotspot\\'}
+rootdir: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend
+configfile: pytest.ini
+plugins: anyio-4.2.0, html-4.2.0, metadata-3.1.1
+collecting ... collected 42 items
+
+tests/security/test_input_resilience.py::TestSqlInjectionResilience::test_sqli_in_targets_search_does_not_break_query[' OR '1'='1] PASSED [  2%]
+tests/security/test_input_resilience.py::TestSqlInjectionResilience::test_sqli_in_targets_search_does_not_break_query['; DROP TABLE users; --] PASSED [  4%]
+tests/security/test_input_resilience.py::TestSqlInjectionResilience::test_sqli_in_targets_search_does_not_break_query[1' UNION SELECT NULL, NULL, NULL --] PASSED [  7%]
+tests/security/test_input_resilience.py::TestSqlInjectionResilience::test_sqli_in_targets_search_does_not_break_query[admin' --] PASSED [  9%]
+tests/security/test_input_resilience.py::TestSqlInjectionResilience::test_sqli_in_attacks_search_does_not_break_query[' OR '1'='1] PASSED [ 11%]
+tests/security/test_input_resilience.py::TestSqlInjectionResilience::test_sqli_in_attacks_search_does_not_break_query['; DROP TABLE users; --] PASSED [ 14%]
+tests/security/test_input_resilience.py::TestSqlInjectionResilience::test_sqli_in_attacks_search_does_not_break_query[1' UNION SELECT NULL, NULL, NULL --] PASSED [ 16%]
+tests/security/test_input_resilience.py::TestSqlInjectionResilience::test_sqli_in_attacks_search_does_not_break_query[admin' --] PASSED [ 19%]
+tests/security/test_input_resilience.py::TestSqlInjectionResilience::test_login_with_sqli_in_email_returns_clean_401 PASSED [ 21%]
+tests/security/test_input_resilience.py::TestXssStoragePassesThrough::test_xss_payload_in_target_name_is_stored_and_returned_unchanged[<script>alert('xss')</script>] PASSED [ 23%]
+tests/security/test_input_resilience.py::TestXssStoragePassesThrough::test_xss_payload_in_target_name_is_stored_and_returned_unchanged[<img src=x onerror=alert(1)>] PASSED [ 26%]
+tests/security/test_input_resilience.py::TestXssStoragePassesThrough::test_xss_payload_in_target_name_is_stored_and_returned_unchanged[javascript:alert('xss')] PASSED [ 28%]
+tests/security/test_input_resilience.py::TestXssStoragePassesThrough::test_xss_payload_in_target_name_is_stored_and_returned_unchanged[<svg/onload=alert(1)>] PASSED [ 30%]
+tests/security/test_input_resilience.py::TestOversizedAndMalformedInput::test_extremely_long_target_name_does_not_500 PASSED [ 33%]
+tests/security/test_input_resilience.py::TestOversizedAndMalformedInput::test_unicode_and_null_bytes_in_input_do_not_crash PASSED [ 35%]
+tests/security/test_input_resilience.py::TestOversizedAndMalformedInput::test_invalid_json_body_returns_4xx_not_500 PASSED [ 38%]
+tests/security/test_jwt_security.py::TestMissingOrMalformedToken::test_no_authorization_header_is_rejected PASSED [ 40%]
+tests/security/test_jwt_security.py::TestMissingOrMalformedToken::test_authorization_without_bearer_prefix_is_rejected PASSED [ 42%]
+tests/security/test_jwt_security.py::TestMissingOrMalformedToken::test_garbage_token_is_rejected PASSED [ 45%]
+tests/security/test_jwt_security.py::TestMissingOrMalformedToken::test_empty_bearer_token_is_rejected PASSED [ 47%]
+tests/security/test_jwt_security.py::TestMissingOrMalformedToken::test_random_base64_in_bearer_is_rejected PASSED [ 50%]
+tests/security/test_jwt_security.py::TestTamperedToken::test_token_with_modified_payload_is_rejected PASSED [ 52%]
+tests/security/test_jwt_security.py::TestTamperedToken::test_token_with_swapped_signature_is_rejected PASSED [ 54%]
+tests/security/test_jwt_security.py::TestAlgorithmConfusion::test_alg_none_token_is_rejected PASSED [ 57%]
+tests/security/test_jwt_security.py::TestAlgorithmConfusion::test_token_signed_with_wrong_secret_is_rejected PASSED [ 59%]
+tests/security/test_jwt_security.py::TestRefreshTokenScope::test_refresh_token_cannot_authorise_normal_endpoints PASSED [ 61%]
+tests/security/test_rbac_enforcement.py::TestAdminOnlyEndpointsRejectViewer::test_viewer_cannot_list_all_users PASSED [ 64%]
+tests/security/test_rbac_enforcement.py::TestAdminOnlyEndpointsRejectViewer::test_viewer_cannot_create_user PASSED [ 66%]
+tests/security/test_rbac_enforcement.py::TestAdminOnlyEndpointsRejectViewer::test_viewer_cannot_delete_user PASSED [ 69%]
+tests/security/test_rbac_enforcement.py::TestManagerOrAdminEndpointsRejectViewer::test_viewer_cannot_create_target PASSED [ 71%]
+tests/security/test_rbac_enforcement.py::TestManagerOrAdminEndpointsRejectViewer::test_viewer_cannot_update_target PASSED [ 73%]
+tests/security/test_rbac_enforcement.py::TestManagerOrAdminEndpointsRejectViewer::test_viewer_cannot_delete_target PASSED [ 76%]
+tests/security/test_rbac_enforcement.py::TestPrivilegeEscalation::test_viewer_creating_a_user_does_not_escalate_to_admin PASSED [ 78%]
+tests/security/test_rbac_enforcement.py::TestPrivilegeEscalation::test_admin_only_targets_remain_safe_with_viewer_token PASSED [ 80%]
+tests/security/test_sensitive_data.py::TestPasswordHashNeverLeaked::test_login_response_contains_no_password_hash PASSED [ 83%]
+tests/security/test_sensitive_data.py::TestPasswordHashNeverLeaked::test_me_response_contains_no_password_hash PASSED [ 85%]
+tests/security/test_sensitive_data.py::TestPasswordHashNeverLeaked::test_users_list_contains_no_password_hash PASSED [ 88%]
+tests/security/test_sensitive_data.py::TestPasswordHashNeverLeaked::test_user_detail_contains_no_password_hash PASSED [ 90%]
+tests/security/test_sensitive_data.py::TestErrorResponsesDoNotLeakInternals::test_404_response_is_short_json PASSED [ 92%]
+tests/security/test_sensitive_data.py::TestErrorResponsesDoNotLeakInternals::test_login_failure_does_not_distinguish_unknown_email_from_wrong_password PASSED [ 95%]
+tests/security/test_sensitive_data.py::TestAuthHeaderHandling::test_health_endpoint_does_not_require_auth PASSED [ 97%]
+tests/security/test_sensitive_data.py::TestAuthHeaderHandling::test_auth_endpoints_present_no_auth_token_in_response_body PASSED [100%]
+
+============================= 42 passed in 21.99s =============================
