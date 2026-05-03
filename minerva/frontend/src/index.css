@@ -48,7 +48,7 @@
   }
 
   .btn-primary {
-    @apply btn bg-aegis-600 hover:bg-aegis-500 text-white shadow-lg shadow-aegis-600/25;
+    @apply btn bg-aegis-700 hover:bg-aegis-600 text-white shadow-lg shadow-aegis-700/25;
   }
 
   .btn-secondary {

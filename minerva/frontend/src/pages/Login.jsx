@@ -60,7 +60,8 @@ export default function Login() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-500 hover:text-dark-300"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-dark-500 hover:text-dark-300"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -84,7 +85,7 @@ export default function Login() {
       </form>
 
       <div className="mt-6 pt-6 border-t border-dark-800">
-        <p className="text-xs text-dark-500 text-center mb-2">
+        <p className="text-xs text-dark-300 text-center mb-2">
           Default credentials (FYP demo):
         </p>
         <div className="text-xs text-dark-400 space-y-1 text-center">

@@ -1,0 +1,941 @@
+Run started:2026-05-03 11:50:16.858859+00:00
+
+Test results:
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\api\attacks.py:415:8
+414	            default_params = json.loads(attack.default_config)
+415	        except:
+416	            pass
+417	    merged_params = {**default_params, **params}
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\api\attacks.py:562:16
+561	                    _db.session.rollback()
+562	                except Exception:
+563	                    pass
+564	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\api\attacks.py:570:12
+569	                result['findings'] = _comp.enrich(_cvss.enrich_with_v4(result['findings']))
+570	            except Exception:
+571	                pass
+572	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\api\attacks.py:578:12
+577	                                             engagement_id=engagement_id)
+578	            except Exception:
+579	                pass
+580	    
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\api\callbacks.py:30:4
+29	        body = request.get_data(as_text=True)
+30	    except Exception:
+31	        pass
+32	    source_ip = (
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\api\campaigns.py:431:20
+430	                            scanner_registry.plugin_dir(plugin_id)
+431	                    except Exception:
+432	                        continue
+433	                    try:
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\api\replay.py:92:8
+91	            target_config["auth_config"] = json.loads(target.auth_config)
+92	        except Exception:
+93	            pass
+94	    target_config = attack_runner.prepare_target_dict(target_config,
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\api\reports.py:77:8
+76	            ev = json.loads(ex.evidence)
+77	        except Exception:
+78	            continue
+79	        tgt = Target.query.get(ex.target_id) if ex.target_id else None
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\api\sarif.py:31:8
+30	            parsed = json.loads(ex.evidence)
+31	        except Exception:
+32	            continue
+33	        if isinstance(parsed, dict):
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\api\scanners.py:73:4
+72	        backup_keep = current_app.config.get('SCANNER_BACKUP_KEEP', 20)
+73	    except Exception:
+74	        pass
+75	    return yaml_store.write_yaml(
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\api\settings.py:120:8
+119	            value = json.loads(setting.value)
+120	        except:
+121	            pass
+122	    elif setting.value_type == 'integer':
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\api\settings.py:311:12
+310	                value = json.loads(s.value)
+311	            except:
+312	                pass
+313	        elif s.value_type == 'integer':
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\api\targets.py:86:12
+85	                    tags = json.loads(t.tags)
+86	            except:
+87	                pass
+88	            
+
+--------------------------------------------------
+>> Issue: [B404:blacklist] Consider possible security implications associated with the subprocess module.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\attack_runner.py:25:0
+24	import socket as _socket
+25	import subprocess as _subprocess
+26	import tempfile
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\attack_runner.py:78:12
+77	                _engagement_service.charge_requests(engagement_id, 1)
+78	            except Exception:
+79	                pass
+80	        if dry_run:
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\attack_runner.py:123:8
+122	            setattr(_mcp_shim, _name, getattr(_mcp_client, _name))
+123	        except Exception:
+124	            pass
+125	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\attack_runner.py:173:12
+172	                t["auth_config"] = _json.loads(raw)
+173	            except Exception:
+174	                pass
+175	    return t
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\attack_runner.py:270:4
+269	        )
+270	    except Exception:
+271	        pass
+272	
+
+--------------------------------------------------
+>> Issue: [B102:exec_used] Use of exec detected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b102_exec_used.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\attack_runner.py:308:12
+307	            )
+308	            exec(compile(script_content, "<attack>", "exec"), g)
+309	            if "execute" not in g:
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\attack_runner.py:375:4
+374	                    f.get("category"))
+375	    except Exception:
+376	        pass
+377	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\attack_runner.py:393:4
+392	        )
+393	    except Exception:
+394	        pass
+395	    return result
+
+--------------------------------------------------
+>> Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\attack_runner.py:437:15
+436	    try:
+437	        proc = _subprocess.run(interp + [path], env=env,
+438	                               capture_output=True, text=True, timeout=timeout)
+439	        stdout = proc.stdout or ""
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\attack_runner.py:468:8
+467	            _os.unlink(path)
+468	        except Exception:
+469	            pass
+470	
+
+--------------------------------------------------
+>> Issue: [B404:blacklist] Consider possible security implications associated with the subprocess module.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\attack_service.py:4:0
+3	"""
+4	import subprocess
+5	import tempfile
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\attack_service.py:158:16
+157	                                                 campaign_name=campaign_name)
+158	                except Exception:
+159	                    pass
+160	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\attack_service.py:175:20
+174	                        update_campaign_progress(execution.campaign_id)
+175	                    except Exception:
+176	                        pass
+177	    
+
+--------------------------------------------------
+>> Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\attack_service.py:264:21
+263	            # Execute
+264	            result = subprocess.run(
+265	                interpreter + [script_path],
+266	                env=env,
+267	                capture_output=True,
+268	                text=True,
+269	                timeout=timeout
+270	            )
+271	            
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\audit_service.py:121:8
+120	            db.session.rollback()
+121	        except Exception:
+122	            pass
+123	        return None
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\cvss.py:109:8
+108	                    "cvss_source": "explicit"}
+109	        except Exception:
+110	            pass
+111	
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\engagement_service.py:119:8
+118	                return True
+119	        except Exception:
+120	            continue
+121	    return False
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\engagement_service.py:239:8
+238	            db.session.rollback()
+239	        except Exception:
+240	            pass
+241	
+
+--------------------------------------------------
+>> Issue: [B404:blacklist] Consider possible security implications associated with the subprocess module.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:31:0
+30	import ssl
+31	import subprocess
+32	import threading
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:283:16
+282	                    retry_after = float(resp.headers.get("Retry-After") or 0)
+283	                except Exception:
+284	                    pass
+285	                sleep_for = retry_after if retry_after > 0 else backoff
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:298:8
+297	            self._session.close()
+298	        except Exception:
+299	            pass
+300	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:342:8
+341	            resp.close()
+342	        except Exception:
+343	            pass
+344	        body = "\n".join(payload_parts) or "{}"
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:451:12
+450	                self._sock.close()
+451	            except Exception:
+452	                pass
+453	            self._sock = None
+
+--------------------------------------------------
+>> Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:515:21
+514	        _env.setdefault("LANG", "en_US.UTF-8")
+515	        self._proc = subprocess.Popen(
+516	            self.command,
+517	            stdin=subprocess.PIPE,
+518	            stdout=subprocess.PIPE,
+519	            stderr=subprocess.PIPE,
+520	            cwd=self.cwd,
+521	            env=_env,
+522	            text=True,
+523	            encoding="utf-8",
+524	            errors="replace",
+525	            bufsize=1,
+526	        )
+527	        self._reader_thread = threading.Thread(
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b101_assert_used.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:534:8
+533	    def _reader(self):
+534	        assert self._proc is not None
+535	        for line in self._proc.stdout:
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b101_assert_used.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:542:8
+541	    def _stderr_reader(self):
+542	        assert self._proc is not None
+543	        for line in self._proc.stderr:
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:554:16
+553	                    self._proc.kill()
+554	                except Exception:
+555	                    pass
+556	            self._proc = None
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b101_assert_used.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:560:8
+559	        self.open()
+560	        assert self._proc is not None and self._proc.stdin is not None
+561	        payload = json.dumps(req_obj) + "\n"
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:710:8
+709	            self.transport.close()
+710	        except Exception:
+711	            pass
+712	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:746:12
+745	                                    notification=True)
+746	            except Exception:
+747	                pass
+748	        else:
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:929:8
+928	                    return "http"
+929	        except Exception:
+930	            continue
+931	    return "http"
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:995:12
+994	                mcp.close()
+995	            except Exception:
+996	                pass
+997	    return {"accepted": accepted, "rejected": rejected, "raw": raw}
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mcp_client.py:1048:8
+1047	            client.close()
+1048	        except Exception:
+1049	            pass
+1050	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mitm_proxy.py:104:12
+103	                req_record["jsonrpc"] = json.loads(body_str)
+104	            except Exception:
+105	                pass
+106	
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mitm_proxy.py:138:21
+137	            try:
+138	                with urlopen(req, timeout=30, context=ctx) as r:
+139	                    status = r.status
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mitm_proxy.py:154:12
+153	                resp_record["jsonrpc"] = json.loads(resp_record["body"])
+154	            except Exception:
+155	                pass
+156	
+
+--------------------------------------------------
+>> Issue: [B104:hardcoded_bind_all_interfaces] Possible binding to all interfaces.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-605 (https://cwe.mitre.org/data/definitions/605.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mitm_proxy.py:202:60
+201	          advertise_host: str | None = None) -> ProxyHandle:
+202	    bind = bind_host or os.environ.get("MINERVA_MITM_BIND", "0.0.0.0")
+203	    # Resolve the advertise host: explicit arg → env override → loopback if
+
+--------------------------------------------------
+>> Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+   Severity: Low   Confidence: High
+   CWE: CWE-330 (https://cwe.mitre.org/data/definitions/330.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mitm_proxy.py:230:12
+229	    for _ in range(40):
+230	        p = random.randint(*_PORT_RANGE)
+231	        s = socket.socket()
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mitm_proxy.py:278:8
+277	            db.session.rollback()
+278	        except Exception:
+279	            pass
+280	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mitm_proxy.py:305:4
+304	        state.server.shutdown()
+305	    except Exception:
+306	        pass
+307	    try:
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mitm_proxy.py:309:4
+308	        state.server.server_close()
+309	    except Exception:
+310	        pass
+311	    # Persist final flow count
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\mitm_proxy.py:322:8
+321	            db.session.rollback()
+322	        except Exception:
+323	            pass
+324	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\notifier.py:73:4
+72	                out[key.rsplit(".", 1)[1]] = row.value
+73	    except Exception:
+74	        pass
+75	    out.setdefault("webhook_url", os.environ.get("MINERVA_WEBHOOK_URL", ""))
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\notifier.py:109:4
+108	                          timeout=timeout, headers=headers)
+109	    except Exception:
+110	        pass  # never raise into caller
+111	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\oob_callback.py:120:8
+119	            session.rollback()
+120	        except Exception:
+121	            pass
+122	
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\report_engine.py:267:8
+266	            })
+267	        except Exception:
+268	            continue
+269	    # Aggregate by ts × severity
+
+--------------------------------------------------
+>> Issue: [B104:hardcoded_bind_all_interfaces] Possible binding to all interfaces.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-605 (https://cwe.mitre.org/data/definitions/605.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\reverse_shell.py:46:50
+45	_PORT_POOL_END = int(os.environ.get("MINERVA_RS_PORT_MAX", "45000"))
+46	_DEFAULT_BIND = os.environ.get("MINERVA_RS_BIND", "0.0.0.0")
+47	_DEFAULT_ADVERTISE = (
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\reverse_shell.py:104:12
+103	                conn.close()
+104	            except Exception:
+105	                pass
+106	        self.session_info = {
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\reverse_shell.py:132:8
+131	                    self._write(db, ReverseShellSession)
+132	        except Exception:
+133	            pass
+134	
+
+--------------------------------------------------
+>> Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+   Severity: Low   Confidence: High
+   CWE: CWE-330 (https://cwe.mitre.org/data/definitions/330.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\reverse_shell.py:173:12
+172	    for _ in range(40):
+173	        p = random.randint(_PORT_POOL_START, _PORT_POOL_END)
+174	        try:
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\reverse_shell.py:214:8
+213	            db.session.rollback()
+214	        except Exception:
+215	            pass
+216	    state.thread.start()
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\reverse_shell.py:238:4
+237	        state.sock.close()
+238	    except Exception:
+239	        pass
+240	    try:
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\reverse_shell.py:242:4
+241	        state.event.set()
+242	    except Exception:
+243	        pass
+244	
+
+--------------------------------------------------
+>> Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+   Severity: Low   Confidence: High
+   CWE: CWE-330 (https://cwe.mitre.org/data/definitions/330.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\runtime.py:140:23
+139	        else:
+140	            time.sleep(random.uniform(low, high) / 1000.0)
+141	
+
+--------------------------------------------------
+>> Issue: [B404:blacklist] Consider possible security implications associated with the subprocess module.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\scan_service.py:5:0
+4	import socket
+5	import subprocess
+6	import json
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\scan_service.py:138:20
+137	                            discovered.append(result)
+138	                    except Exception:
+139	                        pass
+140	            
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\scan_service.py:172:16
+171	                    break
+172	                except:
+173	                    pass
+174	            
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\scan_service.py:179:16
+178	                    result['hostname'] = socket.gethostbyaddr(host)[0]
+179	                except:
+180	                    pass
+181	                    
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\scan_service.py:182:8
+181	                    
+182	        except Exception:
+183	            pass
+184	        
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\scan_service.py:221:20
+220	                            open_ports.append(result)
+221	                    except:
+222	                        pass
+223	            
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\scan_service.py:269:16
+268	                            result['banner'] = banner[:200]
+269	                except:
+270	                    pass
+271	            
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\scan_service.py:273:8
+272	            sock.close()
+273	        except:
+274	            pass
+275	        
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\scan_service.py:345:17
+344	            
+345	            with urllib.request.urlopen(req, timeout=5, context=context) as response:
+346	                headers = dict(response.headers)
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\scan_service.py:416:21
+415	                
+416	                with urllib.request.urlopen(req, timeout=5, context=context) as response:
+417	                    results['endpoints'].append({
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\scan_service.py:432:12
+431	                    })
+432	            except:
+433	                pass
+434	        
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\scanner_registry.py:140:8
+139	            out.append(_summary(name, pdir, manifest, db_path, db))
+140	        except Exception:
+141	            continue
+142	    return out
+
+--------------------------------------------------
+>> Issue: [B404:blacklist] Consider possible security implications associated with the subprocess module.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\scanner_runner.py:19:0
+18	import socket as _socket
+19	import subprocess as _subprocess
+20	import time as _time
+
+--------------------------------------------------
+>> Issue: [B102:exec_used] Use of exec detected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b102_exec_used.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\scanner_runner.py:77:4
+76	    ns = _build_exec_globals(script_path)
+77	    exec(code, ns)
+78	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\secret_validators.py:123:12
+122	                login = r.json().get("login")
+123	            except Exception:
+124	                pass
+125	        return {
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\secret_validators.py:152:8
+151	            body = r.json()
+152	        except Exception:
+153	            pass
+154	        valid = bool(body.get("ok"))
+
+--------------------------------------------------
+>> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'jwt'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html
+   Location: C:\Users\Zeinab\Downloads\FYP\minerva\minerva\backend\app\services\secret_validators.py:357:26
+356	    if not fn:
+357	        if secret_type == "jwt":
+358	            decoded = decode_jwt(value)
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 14623
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 77
+		Medium: 7
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 3
+		High: 81
+Files skipped (0):

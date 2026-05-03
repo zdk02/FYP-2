@@ -4,9 +4,9 @@ import { defineConfig, devices } from '@playwright/test'
 /**
  * Playwright config for Minerva System / End-to-End tests.
  *
- * Prerequisites (run these in two separate terminals before `npm run test:e2e`):
- *   1. Backend:   cd minerva/backend  && python run.py        (serves on :5000)
- *   2. Frontend:  cd minerva/frontend && npm run dev          (serves on :3000)
+ * The `webServer` block below auto-starts both the backend (Flask :5000)
+ * and the frontend (Vite :3000) before tests run, and shuts them down
+ * after — so `npm run test:e2e` is a single self-contained command.
  *
  * Default credentials (seeded by initialize_default_data):
  *   admin@minerva.local / admin123
@@ -38,6 +38,37 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+  webServer: [
+    {
+      command: 'python run.py',
+      cwd: '../backend',
+      url: 'http://localhost:5000/api/v1/health/ready',
+      timeout: 60_000,
+      reuseExistingServer: !process.env.CI,
+      stdout: 'ignore',
+      stderr: 'pipe',
+      env: {
+        // Force UTF-8 stdout so the run.py banner (Unicode box-drawing chars)
+        // doesn't crash on Windows where the default subprocess encoding is cp1252.
+        PYTHONIOENCODING: 'utf-8',
+        PYTHONUTF8: '1',
+        // Disable Flask's debug auto-reloader during E2E. The reloader forks a
+        // child process which confuses Playwright's webServer lifecycle and
+        // causes "Exit code: 1" when the parent watcher shuts down.
+        FLASK_DEBUG: 'false',
+        FLASK_ENV: 'development',
+      },
+    },
+    {
+      command: 'npm run dev',
+      cwd: '.',
+      url: 'http://localhost:3000',
+      timeout: 120_000,
+      reuseExistingServer: !process.env.CI,
+      stdout: 'pipe',
+      stderr: 'pipe',
     },
   ],
 })

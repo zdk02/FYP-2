@@ -17,7 +17,7 @@ import { test, expect } from '@playwright/test'
 
 // Override via env vars if you need to test against a different DB / install:
 //   E2E_ADMIN_EMAIL=admin@minerva.local E2E_ADMIN_PASSWORD=admin123 npm run test:e2e
-const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || 'admin@aegis.local'
+const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || 'admin@minerva.local'
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD || 'admin123'
 
 

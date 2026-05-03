@@ -1,6 +1,6 @@
 # Flask and Extensions
-Flask==3.0.0
-Flask-Cors==4.0.0
+Flask==3.1.3
+Flask-Cors==6.0.0
 Flask-JWT-Extended==4.6.0
 Flask-SQLAlchemy==3.1.1
 Flask-Migrate==4.0.5
@@ -10,21 +10,21 @@ SQLAlchemy==2.0.36
 psycopg2-binary==2.9.10
 
 # Security
-Werkzeug==3.0.1
-PyJWT==2.8.0
+Werkzeug==3.1.6
+PyJWT==2.12.0
 bcrypt==4.1.1
 
 # HTTP Clients
-requests==2.31.0
+requests==2.33.0
 httpx==0.25.2
 
 # Templates and Reporting
-Jinja2==3.1.2
+Jinja2==3.1.6
 reportlab==4.0.7
 
 # Utilities
 python-dateutil==2.8.2
-python-dotenv==1.0.0
+python-dotenv==1.2.2
 click==8.1.7
 
 # Network scanning (optional - install nmap separately)
@@ -34,7 +34,7 @@ python-nmap==0.7.1
 anyio==4.2.0
 
 # Markdown for reports
-markdown==3.5.1
+markdown==3.8.1
 
 # YAML config support
 PyYAML==6.0.1
@@ -44,3 +44,6 @@ PyYAML==6.0.1
 celery==5.3.4
 redis == 5.0.1
 flower ==2.0.1
+
+# Load testing
+locust==2.43.4

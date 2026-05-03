@@ -1,0 +1,5 @@
+Method,Name,Error,Occurrences
+GET,GET /auth/me,"OSError(10048, '[WinError 10048] Only one usage of each socket address (protocol/network address/port) is normally permitted.')",240
+GET,GET /targets,"OSError(10048, '[WinError 10048] Only one usage of each socket address (protocol/network address/port) is normally permitted.')",390
+GET,GET /health/ready,"OSError(10048, '[WinError 10048] Only one usage of each socket address (protocol/network address/port) is normally permitted.')",705
+GET,GET /attacks,"OSError(10048, '[WinError 10048] Only one usage of each socket address (protocol/network address/port) is normally permitted.')",396

@@ -13,7 +13,7 @@ import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 
 
-const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || 'admin@aegis.local'
+const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || 'admin@minerva.local'
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD || 'admin123'
 
 
