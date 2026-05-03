@@ -378,3 +378,100 @@ def preview_report():
     if fmt == "html":
         return Response(report_engine.render_html(rpt), mimetype="text/html")
     return jsonify(rpt), 200
+
+
+# ---------------------------------------------------------------------------
+# Pro report templates: executive / technical / compliance / diff
+# ---------------------------------------------------------------------------
+
+@api_bp.route("/reports/template", methods=["POST"])
+@jwt_required()
+def render_template():
+    """Render one of the four pro templates from a campaign.
+
+    Body: {
+      "campaign_id": "...",
+      "template": "executive" | "technical" | "compliance" | "diff",
+      "framework_key": "owasp_llm_2025",   # for compliance
+      "compare_with_campaign_id": "...",    # for diff
+      "download": false
+    }
+    """
+    from app.services import report_templates as _tpl
+    from app.services import compliance as _comp
+    from app.services import cvss as _cvss
+
+    data = request.get_json() or {}
+    campaign_id = data.get("campaign_id")
+    template = (data.get("template") or "technical").lower()
+
+    if not campaign_id and template != "diff":
+        return jsonify({"error": "campaign_id required"}), 400
+
+    campaign = Campaign.query.get(campaign_id) if campaign_id else None
+    if campaign_id and not campaign:
+        return jsonify({"error": "Campaign not found"}), 404
+
+    if template == "diff":
+        a_id = data.get("run_a_id")
+        b_id = data.get("run_b_id")
+        if not a_id or not b_id:
+            return jsonify({"error": "run_a_id and run_b_id required for diff"}), 400
+        a = AttackExecution.query.get(a_id)
+        b = AttackExecution.query.get(b_id)
+        if not a or not b:
+            return jsonify({"error": "one or both runs not found"}), 404
+        # Reuse the diff_runs logic
+        def _findings_from(execution):
+            if not execution or not execution.evidence:
+                return []
+            try:
+                d = json.loads(execution.evidence)
+            except Exception:
+                return []
+            if isinstance(d, dict):
+                return list(d.get("findings") or [])
+            return []
+        af = _findings_from(a)
+        bf = _findings_from(b)
+        a_keys = {f.get("dedup_key"): f for f in af if f.get("dedup_key")}
+        b_keys = {f.get("dedup_key"): f for f in bf if f.get("dedup_key")}
+        diff = {
+            "run_a": {"id": a.id,
+                      "started_at": a.started_at.isoformat() if a.started_at else None,
+                      "count": len(af)},
+            "run_b": {"id": b.id,
+                      "started_at": b.started_at.isoformat() if b.started_at else None,
+                      "count": len(bf)},
+            "new_count": sum(1 for k in b_keys if k not in a_keys),
+            "fixed_count": sum(1 for k in a_keys if k not in b_keys),
+            "unchanged_count": sum(1 for k in b_keys if k in a_keys
+                                   and a_keys[k].get('severity') == b_keys[k].get('severity')),
+            "regressed_count": sum(1 for k in b_keys if k in a_keys
+                                   and a_keys[k].get('severity') != b_keys[k].get('severity')),
+            "new": [b_keys[k] for k in b_keys if k not in a_keys][:200],
+            "fixed": [a_keys[k] for k in a_keys if k not in b_keys][:200],
+            "regressed": [b_keys[k] for k in b_keys if k in a_keys
+                          and a_keys[k].get('severity') != b_keys[k].get('severity')][:200],
+        }
+        html = _tpl.render_diff(diff, title=data.get("title") or "Diff Report")
+        return Response(html, mimetype="text/html")
+
+    # campaign-based templates
+    rpt = _build_from_campaign(campaign, data)
+    rpt["findings"] = _comp.enrich(_cvss.enrich_with_v4(rpt["findings"]))
+    if template == "executive":
+        html = _tpl.render_executive(rpt)
+    elif template == "compliance":
+        html = _tpl.render_compliance(
+            rpt, framework_key=data.get("framework_key") or "owasp_llm_2025",
+        )
+    else:
+        html = _tpl.render_technical(rpt)
+
+    if data.get("download"):
+        body = html.encode("utf-8")
+        return send_file(io.BytesIO(body), mimetype="text/html",
+                         as_attachment=True,
+                         download_name=f"minerva-{template}-{campaign.id[:8]}.html")
+    return Response(html, mimetype="text/html")

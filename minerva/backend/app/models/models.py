@@ -168,6 +168,7 @@ class Attack(db.Model):
     version = db.Column(db.String(20), default='1.0.0')
     tags = db.Column(db.Text)  # JSON array
     references = db.Column(db.Text)  # JSON array of reference URLs
+    mcp_versions = db.Column(db.Text)  # JSON array of compatible MCP protocol versions
     
     # Status
     is_active = db.Column(db.Boolean, default=True)
@@ -203,6 +204,8 @@ class Attack(db.Model):
             'version': self.version,
             'tags': json.loads(self.tags) if self.tags else [],
             'references': json.loads(self.references) if self.references else [],
+            'mcp_versions': (json.loads(self.mcp_versions) if self.mcp_versions
+                             else ["2024-11-05", "2025-03-26", "2025-06-18"]),
             'is_active': self.is_active,
             'is_verified': self.is_verified,
             'subcategory_id': self.subcategory_id,
@@ -615,11 +618,18 @@ class ScanJob(db.Model):
 
 
 class AuditLog(db.Model):
-    """Audit trail for all actions"""
+    """Audit trail for all actions — hash-chained tamper-evident.
+
+    Each entry's `entry_hash` is sha256 over the canonical fields plus
+    the previous entry's `entry_hash`. A break in the chain is detectable
+    by `audit_service.verify_chain()`.
+    """
     __tablename__ = 'audit_logs'
-    
+
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    sequence = db.Column(db.Integer, autoincrement=True, unique=True)
     user_id = db.Column(db.String(36), db.ForeignKey('users.id'))
+    engagement_id = db.Column(db.String(36), db.ForeignKey('engagements.id'), index=True)
     action = db.Column(db.String(50), nullable=False)
     resource_type = db.Column(db.String(50))
     resource_id = db.Column(db.String(36))
@@ -627,17 +637,24 @@ class AuditLog(db.Model):
     ip_address = db.Column(db.String(45))
     user_agent = db.Column(db.String(500))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+    # Hash chain
+    prev_hash = db.Column(db.String(64))
+    entry_hash = db.Column(db.String(64), index=True)
+
     def to_dict(self):
         return {
             'id': self.id,
+            'sequence': self.sequence,
             'user_id': self.user_id,
+            'engagement_id': self.engagement_id,
             'action': self.action,
             'resource_type': self.resource_type,
             'resource_id': self.resource_id,
             'details': json.loads(self.details) if self.details else {},
             'ip_address': self.ip_address,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'prev_hash': self.prev_hash,
+            'entry_hash': self.entry_hash,
         }
 
 
@@ -702,6 +719,191 @@ class MITMProxySession(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime, index=True)
     flow_count = db.Column(db.Integer, default=0)
+
+
+class Engagement(db.Model):
+    """Pentesting engagement = legal authorization scope.
+
+    Every attack run is bound to an Engagement. The pre-flight gate in
+    `attack_runner` refuses to run against any target outside this
+    engagement's authorized allowlist, or after the time window closes,
+    or once the request budget is exhausted, or if killed.
+    """
+    __tablename__ = 'engagements'
+
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = db.Column(db.String(200), nullable=False)
+    client_name = db.Column(db.String(200))
+    description = db.Column(db.Text)
+
+    # Legal / sign-off
+    signed_off_by = db.Column(db.String(200))
+    sow_filename = db.Column(db.String(255))
+    sow_path = db.Column(db.String(500))
+    rules_of_engagement = db.Column(db.Text)
+
+    # Scope: list of allowlist patterns (host, CIDR, hostname)
+    authorized_targets = db.Column(db.Text)  # JSON list
+
+    # Time window
+    time_window_start = db.Column(db.DateTime)
+    time_window_end = db.Column(db.DateTime)
+
+    # Quotas
+    max_requests = db.Column(db.Integer, default=100000)
+    current_requests = db.Column(db.Integer, default=0)
+    max_wall_seconds = db.Column(db.Integer, default=14400)  # 4h
+    max_concurrent = db.Column(db.Integer, default=4)
+
+    # Safety toggles
+    safe_mode = db.Column(db.Boolean, default=False)
+    dry_run_default = db.Column(db.Boolean, default=False)
+    is_killed = db.Column(db.Boolean, default=False)
+
+    # Health probe thresholds
+    health_baseline_ms = db.Column(db.Integer)
+    health_threshold_x = db.Column(db.Float, default=3.0)
+
+    # Notifications
+    webhook_url = db.Column(db.String(500))
+    webhook_secret = db.Column(db.String(120))
+    slack_url = db.Column(db.String(500))
+    teams_url = db.Column(db.String(500))
+    notify_min_severity = db.Column(db.String(20), default='high')
+
+    # Status
+    status = db.Column(db.String(20), default='active')  # active, paused, completed, archived
+    is_active_default = db.Column(db.Boolean, default=False)
+
+    created_by = db.Column(db.String(36), db.ForeignKey('users.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    creator = db.relationship('User', backref='engagements')
+
+    def to_dict(self):
+        try:
+            allowlist = json.loads(self.authorized_targets) if self.authorized_targets else []
+        except Exception:
+            allowlist = []
+        return {
+            'id': self.id,
+            'name': self.name,
+            'client_name': self.client_name,
+            'description': self.description,
+            'signed_off_by': self.signed_off_by,
+            'sow_filename': self.sow_filename,
+            'rules_of_engagement': self.rules_of_engagement,
+            'authorized_targets': allowlist,
+            'time_window_start': self.time_window_start.isoformat() if self.time_window_start else None,
+            'time_window_end': self.time_window_end.isoformat() if self.time_window_end else None,
+            'max_requests': self.max_requests,
+            'current_requests': self.current_requests or 0,
+            'max_wall_seconds': self.max_wall_seconds,
+            'max_concurrent': self.max_concurrent,
+            'safe_mode': bool(self.safe_mode),
+            'dry_run_default': bool(self.dry_run_default),
+            'is_killed': bool(self.is_killed),
+            'health_baseline_ms': self.health_baseline_ms,
+            'health_threshold_x': self.health_threshold_x,
+            'webhook_url': self.webhook_url,
+            'has_webhook_secret': bool(self.webhook_secret),
+            'slack_url': self.slack_url,
+            'teams_url': self.teams_url,
+            'notify_min_severity': self.notify_min_severity,
+            'status': self.status,
+            'is_active_default': bool(self.is_active_default),
+            'created_by': self.created_by,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class FindingTriage(db.Model):
+    """Cross-run findings triage state.
+
+    Keyed by a stable dedup key so re-running the same attack against
+    the same target/tool/parameter does not produce duplicate findings —
+    instead it links to this triage row and inherits status (FP / fixed
+    / accepted / open).
+    """
+    __tablename__ = 'finding_triage'
+
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    dedup_key = db.Column(db.String(64), unique=True, index=True, nullable=False)
+    engagement_id = db.Column(db.String(36), db.ForeignKey('engagements.id'), index=True)
+    target_id = db.Column(db.String(36), db.ForeignKey('targets.id'), index=True)
+    attack_id = db.Column(db.String(36), index=True)
+    tool = db.Column(db.String(150))
+    parameter = db.Column(db.String(150))
+    payload_class = db.Column(db.String(150))
+    title = db.Column(db.String(300))
+    severity = db.Column(db.String(20))
+    status = db.Column(db.String(20), default='open')  # open, false_positive, accepted, fixed
+    confidence = db.Column(db.String(20))
+    fp_history = db.Column(db.Integer, default=0)  # for confidence model
+    tp_history = db.Column(db.Integer, default=0)
+    first_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_run_id = db.Column(db.String(36))
+    triaged_by = db.Column(db.String(36), db.ForeignKey('users.id'))
+    triage_note = db.Column(db.Text)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'dedup_key': self.dedup_key,
+            'engagement_id': self.engagement_id,
+            'target_id': self.target_id,
+            'attack_id': self.attack_id,
+            'tool': self.tool,
+            'parameter': self.parameter,
+            'payload_class': self.payload_class,
+            'title': self.title,
+            'severity': self.severity,
+            'status': self.status,
+            'confidence': self.confidence,
+            'fp_history': self.fp_history or 0,
+            'tp_history': self.tp_history or 0,
+            'first_seen': self.first_seen.isoformat() if self.first_seen else None,
+            'last_seen': self.last_seen.isoformat() if self.last_seen else None,
+            'last_run_id': self.last_run_id,
+            'triaged_by': self.triaged_by,
+            'triage_note': self.triage_note,
+        }
+
+
+class APIToken(db.Model):
+    """Scoped API tokens for headless integration."""
+    __tablename__ = 'api_tokens'
+
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = db.Column(db.String(150), nullable=False)
+    token_hash = db.Column(db.String(128), unique=True, nullable=False, index=True)
+    scopes = db.Column(db.Text)  # JSON list of scope strings
+    engagement_id = db.Column(db.String(36), db.ForeignKey('engagements.id'))
+    created_by = db.Column(db.String(36), db.ForeignKey('users.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime)
+    last_used = db.Column(db.DateTime)
+    is_revoked = db.Column(db.Boolean, default=False)
+
+    def to_dict(self):
+        try:
+            scopes = json.loads(self.scopes) if self.scopes else []
+        except Exception:
+            scopes = []
+        return {
+            'id': self.id,
+            'name': self.name,
+            'scopes': scopes,
+            'engagement_id': self.engagement_id,
+            'created_by': self.created_by,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'last_used': self.last_used.isoformat() if self.last_used else None,
+            'is_revoked': bool(self.is_revoked),
+        }
 
 
 class SystemSettings(db.Model):

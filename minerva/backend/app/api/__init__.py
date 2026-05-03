@@ -25,3 +25,9 @@ from app.api import callbacks
 from app.api import notifications
 from app.api import settings
 from app.api import dashboard
+from app.api import engagements
+from app.api import audit
+from app.api import findings_triage
+from app.api import compliance
+from app.api import replay
+from app.api import sarif

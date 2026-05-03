@@ -1,0 +1,300 @@
+{
+  "version": "1.0",
+  "description": "Maps each Minerva pro-attack category to compliance frameworks: OWASP LLM Top-10 (2025), MITRE ATLAS, MITRE ATT&CK, CWE, NIST AI RMF, NIST 800-53, ISO 27001 controls.",
+  "frameworks": {
+    "owasp_llm_2025": {
+      "name": "OWASP Top 10 for LLM Applications 2025",
+      "url": "https://owasp.org/www-project-top-10-for-large-language-model-applications/"
+    },
+    "mitre_atlas": {
+      "name": "MITRE ATLAS — Adversarial Threat Landscape for AI Systems",
+      "url": "https://atlas.mitre.org/"
+    },
+    "mitre_attack": {
+      "name": "MITRE ATT&CK Enterprise",
+      "url": "https://attack.mitre.org/"
+    },
+    "cwe": {
+      "name": "Common Weakness Enumeration",
+      "url": "https://cwe.mitre.org/"
+    },
+    "nist_ai_rmf": {
+      "name": "NIST AI Risk Management Framework",
+      "url": "https://www.nist.gov/itl/ai-risk-management-framework"
+    },
+    "nist_800_53": {
+      "name": "NIST SP 800-53 Rev 5",
+      "url": "https://csrc.nist.gov/projects/risk-management/sp800-53-controls"
+    },
+    "iso_27001": {
+      "name": "ISO/IEC 27001:2022 controls",
+      "url": "https://www.iso.org/standard/27001"
+    }
+  },
+  "mappings": {
+    "direct_prompt_injection": {
+      "owasp_llm_2025": ["LLM01:2025 Prompt Injection"],
+      "mitre_atlas": ["AML.T0051.000 LLM Prompt Injection: Direct"],
+      "mitre_attack": ["T1059 Command and Scripting Interpreter"],
+      "cwe": ["CWE-1039", "CWE-77"],
+      "nist_ai_rmf": ["MEASURE 2.6 Computational and Statistical Validity"],
+      "nist_800_53": ["SI-10 Information Input Validation"],
+      "iso_27001": ["A.8.28 Secure coding"]
+    },
+    "indirect_prompt_injection": {
+      "owasp_llm_2025": ["LLM01:2025 Prompt Injection"],
+      "mitre_atlas": ["AML.T0051.001 LLM Prompt Injection: Indirect"],
+      "mitre_attack": ["T1566 Phishing"],
+      "cwe": ["CWE-1039", "CWE-77"],
+      "nist_ai_rmf": ["MAP 5.2 Risk Tolerance"],
+      "nist_800_53": ["SI-10", "SC-8 Transmission Confidentiality"],
+      "iso_27001": ["A.5.7 Threat intelligence"]
+    },
+    "tool_poisoning": {
+      "owasp_llm_2025": ["LLM05:2025 Improper Output Handling", "LLM03:2025 Supply Chain"],
+      "mitre_atlas": ["AML.T0010 ML Supply Chain Compromise"],
+      "mitre_attack": ["T1195 Supply Chain Compromise"],
+      "cwe": ["CWE-829", "CWE-915"],
+      "nist_800_53": ["SR-3 Supply Chain Controls and Processes"],
+      "iso_27001": ["A.5.21 Managing information security in the ICT supply chain"]
+    },
+    "tool_shadowing": {
+      "owasp_llm_2025": ["LLM06:2025 Excessive Agency"],
+      "mitre_atlas": ["AML.T0011 User Execution"],
+      "mitre_attack": ["T1574 Hijack Execution Flow"],
+      "cwe": ["CWE-694", "CWE-367"],
+      "nist_800_53": ["AC-3 Access Enforcement"],
+      "iso_27001": ["A.8.2 Privileged access rights"]
+    },
+    "tool_rebinding": {
+      "owasp_llm_2025": ["LLM06:2025 Excessive Agency"],
+      "mitre_atlas": ["AML.T0011 User Execution"],
+      "mitre_attack": ["T1574"],
+      "cwe": ["CWE-367", "CWE-841"],
+      "nist_800_53": ["AC-3"],
+      "iso_27001": ["A.8.2"]
+    },
+    "tool_annotations_spoofing": {
+      "owasp_llm_2025": ["LLM06:2025 Excessive Agency"],
+      "mitre_atlas": ["AML.T0011 User Execution", "AML.T0048 External Harms"],
+      "mitre_attack": ["T1565 Data Manipulation"],
+      "cwe": ["CWE-862", "CWE-440"],
+      "nist_800_53": ["AC-6 Least Privilege"],
+      "iso_27001": ["A.5.15 Access control"]
+    },
+    "llm_jailbreak": {
+      "owasp_llm_2025": ["LLM01:2025 Prompt Injection", "LLM07:2025 System Prompt Leakage"],
+      "mitre_atlas": ["AML.T0054 LLM Jailbreak"],
+      "mitre_attack": ["T1078 Valid Accounts"],
+      "cwe": ["CWE-1039"],
+      "nist_ai_rmf": ["GOVERN 5.1"],
+      "iso_27001": ["A.5.7"]
+    },
+    "sampling_abuse": {
+      "owasp_llm_2025": ["LLM06:2025 Excessive Agency"],
+      "mitre_atlas": ["AML.T0011"],
+      "mitre_attack": ["T1059"],
+      "cwe": ["CWE-285"],
+      "nist_800_53": ["AC-3"],
+      "iso_27001": ["A.5.15"]
+    },
+    "elicitation_abuse": {
+      "owasp_llm_2025": ["LLM02:2025 Sensitive Information Disclosure"],
+      "mitre_atlas": ["AML.T0019 Publish Poisoned Datasets"],
+      "mitre_attack": ["T1566 Phishing"],
+      "cwe": ["CWE-285"],
+      "nist_800_53": ["IA-6 Authenticator Feedback"],
+      "iso_27001": ["A.5.10 Acceptable use of information"]
+    },
+    "command_injection": {
+      "owasp_llm_2025": ["LLM05:2025 Improper Output Handling"],
+      "mitre_atlas": ["AML.T0050 Command and Scripting Interpreter"],
+      "mitre_attack": ["T1059"],
+      "cwe": ["CWE-77", "CWE-78"],
+      "nist_800_53": ["SI-10"],
+      "iso_27001": ["A.8.28"]
+    },
+    "sql_injection": {
+      "owasp_llm_2025": ["LLM05:2025 Improper Output Handling"],
+      "mitre_atlas": ["AML.T0050"],
+      "mitre_attack": ["T1190 Exploit Public-Facing Application"],
+      "cwe": ["CWE-89"],
+      "nist_800_53": ["SI-10"],
+      "iso_27001": ["A.8.28"]
+    },
+    "rce": {
+      "owasp_llm_2025": ["LLM05:2025 Improper Output Handling"],
+      "mitre_atlas": ["AML.T0050"],
+      "mitre_attack": ["T1059", "T1203 Exploitation for Client Execution"],
+      "cwe": ["CWE-94", "CWE-78"],
+      "nist_800_53": ["SI-10", "SC-39 Process Isolation"],
+      "iso_27001": ["A.8.28", "A.8.7 Protection against malware"]
+    },
+    "ssrf": {
+      "owasp_llm_2025": ["LLM05:2025 Improper Output Handling"],
+      "mitre_atlas": ["AML.T0048"],
+      "mitre_attack": ["T1190", "T1041 Exfiltration Over C2 Channel"],
+      "cwe": ["CWE-918"],
+      "nist_800_53": ["SC-7 Boundary Protection"],
+      "iso_27001": ["A.8.20 Networks security"]
+    },
+    "path_traversal": {
+      "owasp_llm_2025": ["LLM02:2025 Sensitive Information Disclosure"],
+      "mitre_attack": ["T1083 File and Directory Discovery"],
+      "cwe": ["CWE-22", "CWE-23"],
+      "nist_800_53": ["SI-10", "AC-3"],
+      "iso_27001": ["A.8.3 Information access restriction"]
+    },
+    "authentication_bypass": {
+      "owasp_llm_2025": ["LLM06:2025 Excessive Agency"],
+      "mitre_atlas": ["AML.T0012 Valid Accounts"],
+      "mitre_attack": ["T1078", "T1556 Modify Authentication Process"],
+      "cwe": ["CWE-287", "CWE-306"],
+      "nist_800_53": ["IA-2 Identification and Authentication"],
+      "iso_27001": ["A.5.16 Identity management"]
+    },
+    "authorization_horizontal": {
+      "owasp_llm_2025": ["LLM06:2025 Excessive Agency"],
+      "mitre_atlas": ["AML.T0012"],
+      "mitre_attack": ["T1078"],
+      "cwe": ["CWE-639", "CWE-285"],
+      "nist_800_53": ["AC-3", "AC-4 Information Flow Enforcement"],
+      "iso_27001": ["A.5.15", "A.5.18 Access rights"]
+    },
+    "oauth": {
+      "owasp_llm_2025": ["LLM06:2025 Excessive Agency"],
+      "mitre_attack": ["T1550 Use Alternate Authentication Material"],
+      "cwe": ["CWE-287", "CWE-346"],
+      "nist_800_53": ["IA-2", "IA-8 Identification and Authentication (Non-Org Users)"],
+      "iso_27001": ["A.5.16"]
+    },
+    "resource_exhaustion": {
+      "owasp_llm_2025": ["LLM10:2025 Unbounded Consumption"],
+      "mitre_atlas": ["AML.T0034 Cost Harvesting"],
+      "mitre_attack": ["T1499 Endpoint Denial of Service"],
+      "cwe": ["CWE-400", "CWE-770"],
+      "nist_800_53": ["SC-5 Denial-of-Service Protection"],
+      "iso_27001": ["A.8.6 Capacity management"]
+    },
+    "information_disclosure": {
+      "owasp_llm_2025": ["LLM02:2025 Sensitive Information Disclosure"],
+      "mitre_atlas": ["AML.T0024 Exfiltration via ML Inference API"],
+      "mitre_attack": ["T1592 Gather Victim Host Information"],
+      "cwe": ["CWE-200", "CWE-209"],
+      "nist_800_53": ["SC-28 Protection of Information at Rest"],
+      "iso_27001": ["A.5.13 Labelling of information"]
+    },
+    "insecure_deserialization": {
+      "owasp_llm_2025": ["LLM05:2025 Improper Output Handling"],
+      "mitre_attack": ["T1059", "T1203"],
+      "cwe": ["CWE-502"],
+      "nist_800_53": ["SI-10"],
+      "iso_27001": ["A.8.28"]
+    },
+    "data_in_transit": {
+      "owasp_llm_2025": ["LLM02:2025 Sensitive Information Disclosure"],
+      "mitre_attack": ["T1557 Adversary-in-the-Middle"],
+      "cwe": ["CWE-319", "CWE-300"],
+      "nist_800_53": ["SC-8", "SC-12 Cryptographic Key Establishment"],
+      "iso_27001": ["A.8.24 Use of cryptography"]
+    },
+    "ws_origin_cswsh": {
+      "owasp_llm_2025": ["LLM02:2025 Sensitive Information Disclosure"],
+      "mitre_attack": ["T1557"],
+      "cwe": ["CWE-346", "CWE-352"],
+      "nist_800_53": ["SC-7", "AC-4"],
+      "iso_27001": ["A.8.20"]
+    },
+    "http_cookie_flags": {
+      "owasp_llm_2025": ["LLM02:2025 Sensitive Information Disclosure"],
+      "mitre_attack": ["T1539 Steal Web Session Cookie"],
+      "cwe": ["CWE-1004", "CWE-614"],
+      "nist_800_53": ["SC-23 Session Authenticity"],
+      "iso_27001": ["A.5.16"]
+    },
+    "http_session_fixation": {
+      "owasp_llm_2025": ["LLM06:2025 Excessive Agency"],
+      "mitre_attack": ["T1539"],
+      "cwe": ["CWE-384"],
+      "nist_800_53": ["SC-23"],
+      "iso_27001": ["A.5.16"]
+    },
+    "http_session_entropy": {
+      "owasp_llm_2025": ["LLM06:2025 Excessive Agency"],
+      "mitre_attack": ["T1539"],
+      "cwe": ["CWE-330", "CWE-331"],
+      "nist_800_53": ["SC-12"],
+      "iso_27001": ["A.8.24"]
+    },
+    "http_mcp_session_id": {
+      "owasp_llm_2025": ["LLM06:2025 Excessive Agency"],
+      "mitre_attack": ["T1539"],
+      "cwe": ["CWE-302"],
+      "nist_800_53": ["SC-23"],
+      "iso_27001": ["A.5.16"]
+    },
+    "logging_set_level_abuse": {
+      "owasp_llm_2025": ["LLM02:2025 Sensitive Information Disclosure"],
+      "mitre_attack": ["T1562 Impair Defenses"],
+      "cwe": ["CWE-440", "CWE-285"],
+      "nist_800_53": ["AU-6 Audit Record Review"],
+      "iso_27001": ["A.8.15 Logging"]
+    },
+    "logging_verbose_leak": {
+      "owasp_llm_2025": ["LLM02:2025 Sensitive Information Disclosure"],
+      "mitre_attack": ["T1592"],
+      "cwe": ["CWE-209", "CWE-532"],
+      "nist_800_53": ["AU-9 Protection of Audit Information"],
+      "iso_27001": ["A.8.15"]
+    },
+    "notifications_subscription_validation": {
+      "owasp_llm_2025": ["LLM10:2025 Unbounded Consumption"],
+      "mitre_attack": ["T1499"],
+      "cwe": ["CWE-20", "CWE-770"],
+      "nist_800_53": ["SC-5", "SI-10"],
+      "iso_27001": ["A.8.6"]
+    },
+    "notifications_subscribe_flood": {
+      "owasp_llm_2025": ["LLM10:2025 Unbounded Consumption"],
+      "mitre_attack": ["T1499"],
+      "cwe": ["CWE-770", "CWE-400"],
+      "nist_800_53": ["SC-5"],
+      "iso_27001": ["A.8.6"]
+    },
+    "prompt_injection": {
+      "owasp_llm_2025": ["LLM01:2025 Prompt Injection"],
+      "mitre_atlas": ["AML.T0051"],
+      "mitre_attack": ["T1059"],
+      "cwe": ["CWE-1039"],
+      "nist_800_53": ["SI-10"],
+      "iso_27001": ["A.8.28"]
+    },
+    "schema_inconsistency": {
+      "owasp_llm_2025": ["LLM05:2025 Improper Output Handling"],
+      "cwe": ["CWE-704", "CWE-20"],
+      "nist_800_53": ["SI-10"],
+      "iso_27001": ["A.8.28"]
+    },
+    "pagination_cursor_abuse": {
+      "owasp_llm_2025": ["LLM05:2025 Improper Output Handling"],
+      "mitre_attack": ["T1190"],
+      "cwe": ["CWE-89", "CWE-918"],
+      "nist_800_53": ["SI-10"],
+      "iso_27001": ["A.8.28"]
+    },
+    "protocol_version_downgrade": {
+      "owasp_llm_2025": ["LLM06:2025 Excessive Agency"],
+      "mitre_attack": ["T1562 Impair Defenses"],
+      "cwe": ["CWE-757", "CWE-757"],
+      "nist_800_53": ["SC-13 Cryptographic Protection"],
+      "iso_27001": ["A.8.24"]
+    },
+    "stdio_argv_env_injection": {
+      "owasp_llm_2025": ["LLM05:2025 Improper Output Handling"],
+      "mitre_attack": ["T1059"],
+      "cwe": ["CWE-88", "CWE-78"],
+      "nist_800_53": ["SI-10"],
+      "iso_27001": ["A.8.28"]
+    }
+  }
+}

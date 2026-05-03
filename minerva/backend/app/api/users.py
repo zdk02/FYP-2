@@ -35,6 +35,36 @@ def manager_or_admin_required(f):
     return decorated_function
 
 
+def role_required(*roles):
+    """Decorator to require any of the listed roles.
+
+    Roles in the Minerva RBAC model:
+      - admin    : everything (engagement CRUD, user mgmt, attack edit)
+      - manager  : engagement CRUD, attack edit, no user mgmt
+      - operator : run attacks, manage engagements, no user mgmt
+      - analyst  : review findings, mark FP / accept, no execution
+      - viewer   : read-only
+
+    `admin` is implicitly always allowed.
+    """
+    allowed = set(roles) | {'admin'}
+
+    def deco(f):
+        @wraps(f)
+        @jwt_required()
+        def decorated_function(*args, **kwargs):
+            current_user_id = get_jwt_identity()
+            user = User.query.get(current_user_id)
+            if not user or user.role not in allowed:
+                return jsonify({
+                    'error': f'Requires one of: {", ".join(sorted(allowed))}',
+                    'have': user.role if user else None,
+                }), 403
+            return f(*args, **kwargs)
+        return decorated_function
+    return deco
+
+
 @api_bp.route('/users', methods=['GET'])
 @manager_or_admin_required
 def get_users():
@@ -182,8 +212,9 @@ def get_roles():
     """Get available user roles"""
     roles = [
         {'id': 'admin', 'name': 'Administrator', 'description': 'Full system access'},
-        {'id': 'manager', 'name': 'Manager', 'description': 'Manage campaigns and users'},
-        {'id': 'operator', 'name': 'Operator', 'description': 'Execute attacks and view results'},
-        {'id': 'viewer', 'name': 'Viewer', 'description': 'View-only access'}
+        {'id': 'manager', 'name': 'Manager', 'description': 'Manage campaigns and engagements'},
+        {'id': 'operator', 'name': 'Operator', 'description': 'Execute attacks and manage engagements'},
+        {'id': 'analyst', 'name': 'Analyst', 'description': 'Review findings, mark FP/accepted, no execution'},
+        {'id': 'viewer', 'name': 'Viewer', 'description': 'Read-only access'}
     ]
     return jsonify(roles), 200

@@ -6,6 +6,7 @@ from app.models.models import (
     ConnectionScript, Target, DiscoveredEndpoint, Campaign,
     AttackExecution, Report, ScanJob, AuditLog, SystemSettings,
     OOBToken, OOBHit, ReverseShellSession, MITMProxySession,
+    Engagement, FindingTriage, APIToken,
 )
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     'ConnectionScript', 'Target', 'DiscoveredEndpoint', 'Campaign',
     'AttackExecution', 'Report', 'ScanJob', 'AuditLog', 'SystemSettings',
     'OOBToken', 'OOBHit', 'ReverseShellSession', 'MITMProxySession',
+    'Engagement', 'FindingTriage', 'APIToken',
 ]

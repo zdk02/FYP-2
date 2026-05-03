@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
+import ActiveEngagementBanner from './ActiveEngagementBanner'
 import {
   LayoutDashboard,
   Crosshair,
@@ -24,16 +25,20 @@ import {
   X,
   Bell,
   Search,
+  Briefcase,
+  ScrollText,
 } from 'lucide-react'
 
 const navItems = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { name: 'Engagements', path: '/engagements', icon: Briefcase },
   { name: 'Attack Library', path: '/attacks', icon: Crosshair },
   { name: 'Scanners', path: '/scanners', icon: ShieldCheck },
   { name: 'Targets', path: '/targets', icon: Target },
   { name: 'Campaigns', path: '/campaigns', icon: Rocket },
   { name: 'Reports', path: '/reports', icon: FileText },
   { name: 'Scans', path: '/scans', icon: Radar },
+  { name: 'Audit Log', path: '/audit', icon: ScrollText },
 ]
 
 const adminItems = [
@@ -222,10 +227,11 @@ export default function MainLayout() {
   return (
     <div className="min-h-screen bg-dark-950 flex">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
+
       <div className="flex-1 flex flex-col min-w-0">
+        <ActiveEngagementBanner />
         <Header onMenuClick={() => setSidebarOpen(true)} />
-        
+
         <main className="flex-1 p-6 overflow-auto bg-grid">
           <Outlet />
         </main>

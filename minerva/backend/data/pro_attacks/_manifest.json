@@ -1,6 +1,6 @@
 {
-  "version": "2.0",
-  "description": "Minerva pro-grade MCP pentesting attack pack. 24 attacks covering every documented MCP attack surface. All parameters are UI-dynamic — pentesters tune timeouts, transport, protocol version, payload tags, encoding modes, and target scoping at run-time.",
+  "version": "3.0",
+  "description": "Minerva pro-grade MCP pentesting attack pack. 30 attacks covering every documented MCP attack surface (Client / Server / Data-in-Transit). All parameters are UI-dynamic — pentesters tune timeouts, transport, protocol version, payload tags, encoding modes, and target scoping at run-time.",
   "attacks": [
     {
       "file": "direct_prompt_injection.py",
@@ -23,6 +23,7 @@
       },
       "default_config": {"timeout": 30, "max_tools": 20, "max_payloads": 12, "max_params_per_tool": 3, "allow_tools": [], "block_tools": [], "payload_tags": [], "protocol_version": "", "transport_override": ""},
       "tags": ["mcp", "prompt_injection", "canary", "client_side", "pro"],
+      "mcp_versions": ["2024-11-05", "2025-03-26", "2025-06-18"],
       "references": [
         "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
         "https://modelcontextprotocol.io/"
@@ -384,6 +385,7 @@
       },
       "default_config": {"timeout": 20, "follow_well_known": true, "metadata_url": "", "authorize_url": "", "token_url": "", "redirect_test_uris": ["https://attacker.example/cb", "http://localhost:1234/cb", "javascript:alert(1)", "data:text/html,<script>alert(1)</script>"], "test_pkce": true, "test_state": true, "jwt_test": true, "audience_test": true, "test_refresh": true, "scopes_to_request": ["openid", "profile", "email", "mcp:read", "mcp:tools"]},
       "tags": ["mcp", "oauth", "pkce", "jwt", "server_side", "pro"],
+      "mcp_versions": ["2025-06-18"],
       "references": [
         "https://datatracker.ietf.org/doc/html/rfc6749",
         "https://datatracker.ietf.org/doc/html/rfc7636",
@@ -410,6 +412,7 @@
       },
       "default_config": {"timeout": 30, "max_tools": 10, "only_tool_names": [], "reverse_test": true, "audit_prompts": true, "protocol_version": "", "transport_override": ""},
       "tags": ["mcp", "sampling", "client_side", "pro"],
+      "mcp_versions": ["2024-11-05", "2025-03-26", "2025-06-18"],
       "references": ["https://modelcontextprotocol.io/specification/2025-06-18/client/sampling"]
     },
     {
@@ -431,6 +434,7 @@
       },
       "default_config": {"timeout": 30, "max_tools": 10, "only_tool_names": [], "reverse_test": true, "capture_window": 5.0, "protocol_version": "2025-06-18", "transport_override": ""},
       "tags": ["mcp", "elicitation", "phishing", "client_side", "pro"],
+      "mcp_versions": ["2025-06-18"],
       "references": ["https://modelcontextprotocol.io/specification/2025-06-18/client/elicitation"]
     },
     {
@@ -523,6 +527,141 @@
       "references": ["https://cwe.mitre.org/data/definitions/89.html"]
     },
     {
+      "file": "tool_annotations_spoofing.py",
+      "name": "Tool Annotations Spoofing (Pro)",
+      "subcategory": "Client-Side Attacks",
+      "severity": "high",
+      "attack_type": "manipulation",
+      "mitre_id": "T1565",
+      "description": "MCP-novel. Verifies the honesty of tool annotation hints (readOnlyHint / destructiveHint / idempotentHint / openWorldHint). Calls each tool claimed read-only with safe args, snapshots resources/list before+after, and reports any state-drift as a CONFIRMED lie. Also flags contradictory hints, missing destructiveHint on destructively-named tools, and missing openWorldHint on URL-accepting tools.",
+      "config_schema": {
+        "timeout":                  {"type": "integer", "title": "Per-request timeout (s)", "default": 20, "minimum": 1, "maximum": 600},
+        "max_tools":                {"type": "integer", "title": "Max tools to audit", "default": 20, "minimum": 1, "maximum": 500},
+        "only_tool_names":          {"type": "array", "title": "Only these tools", "default": [], "items": {"type": "string"}},
+        "test_idempotency":         {"type": "boolean", "title": "Test idempotentHint honesty", "default": true},
+        "test_destructive_naming":  {"type": "boolean", "title": "Flag destructive-named tools missing destructiveHint", "default": true},
+        "protocol_version":         {"type": "string", "title": "MCP protocol version", "default": ""},
+        "transport_override":       {"type": "string", "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
+      },
+      "default_config": {"timeout": 20, "max_tools": 20, "only_tool_names": [], "test_idempotency": true, "test_destructive_naming": true, "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "tool_annotations", "spoofing", "client_side", "pro"],
+      "mcp_versions": ["2025-03-26", "2025-06-18"],
+      "references": ["https://modelcontextprotocol.io/specification/2025-06-18/server/tools"]
+    },
+    {
+      "file": "logging_set_level_abuse.py",
+      "name": "Logging setLevel Abuse (Pro)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "high",
+      "attack_type": "extraction",
+      "mitre_id": "T1592",
+      "description": "Abuses the MCP `logging/setLevel` control-plane RPC. Tests unauthenticated acceptance, post-flip secret leakage in tool-error responses, non-standard level acceptance, and undeclared-capability acceptance. Promotes to CONFIRMED when secrets / stack-traces / SQL queries appear in responses after flipping to debug.",
+      "config_schema": {
+        "timeout":                   {"type": "integer", "title": "Per-request timeout (s)", "default": 20, "minimum": 1, "maximum": 600},
+        "test_unauth":               {"type": "boolean", "title": "Test without auth", "default": true},
+        "test_invalid_levels":       {"type": "boolean", "title": "Test non-standard log levels", "default": true},
+        "probe_tools_after_debug":   {"type": "boolean", "title": "Probe tools after debug flip for leakage", "default": true},
+        "protocol_version":          {"type": "string", "title": "MCP protocol version", "default": ""},
+        "transport_override":        {"type": "string", "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
+      },
+      "default_config": {"timeout": 20, "test_unauth": true, "test_invalid_levels": true, "probe_tools_after_debug": true, "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "logging", "control_plane", "info_disclosure", "server_side", "pro"],
+      "mcp_versions": ["2024-11-05", "2025-03-26", "2025-06-18"],
+      "references": ["https://modelcontextprotocol.io/specification/2025-06-18/server/utilities/logging"]
+    },
+    {
+      "file": "authorization_horizontal.py",
+      "name": "Authorization Horizontal — BOLA/IDOR (Pro)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "critical",
+      "attack_type": "bypass",
+      "mitre_id": "T1078",
+      "description": "OWASP API #1. Discovers tools with ID-shaped parameters (id, user_id, owner, file_id, document_id, ...) and probes for missing object-level authorization. Single-principal mode mutates IDs heuristically; two-principal mode (with secondary_auth) cross-calls primary→secondary's resources for CONFIRMED IDOR.",
+      "config_schema": {
+        "timeout":                    {"type": "integer", "title": "Per-request timeout (s)", "default": 30, "minimum": 1, "maximum": 600},
+        "max_tools":                  {"type": "integer", "title": "Max ID-bearing tools to probe", "default": 15, "minimum": 1, "maximum": 200},
+        "max_mutations_per_param":    {"type": "integer", "title": "Mutations per ID param", "default": 5, "minimum": 1, "maximum": 50},
+        "secondary_auth":             {"type": "object", "title": "Secondary auth (two-principal mode)", "default": {}, "description": "auth_config dict for a second principal. Empty = single-principal mode."},
+        "protocol_version":           {"type": "string", "title": "MCP protocol version", "default": ""},
+        "transport_override":         {"type": "string", "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
+      },
+      "default_config": {"timeout": 30, "max_tools": 15, "max_mutations_per_param": 5, "secondary_auth": {}, "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "authorization", "bola", "idor", "owasp_api_1", "server_side", "pro"],
+      "mcp_versions": ["2024-11-05", "2025-03-26", "2025-06-18"],
+      "references": [
+        "https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/",
+        "https://cwe.mitre.org/data/definitions/639.html"
+      ]
+    },
+    {
+      "file": "notifications_subscription_abuse.py",
+      "name": "Notifications & Subscription Abuse (Pro)",
+      "subcategory": "Server-Side Attacks",
+      "severity": "high",
+      "attack_type": "denial_of_service",
+      "mitre_id": "T1499",
+      "description": "Tests MCP server-pushed channels: resources/subscribe acceptance without resources.subscribe capability, unbounded subscription flooding, subscribe to non-existent URI without validation, and malformed notifications/* handling. Flags stack-trace leakage from poorly-handled notifications.",
+      "config_schema": {
+        "timeout":               {"type": "integer", "title": "Per-request timeout (s)", "default": 20, "minimum": 1, "maximum": 600},
+        "flood_count":           {"type": "integer", "title": "Subscribe flood count", "default": 50, "minimum": 1, "maximum": 5000},
+        "test_unauth":           {"type": "boolean", "title": "Test unauthenticated subscribe", "default": true},
+        "test_malformed":        {"type": "boolean", "title": "Test malformed notifications", "default": true},
+        "test_unknown_uri":      {"type": "boolean", "title": "Subscribe to non-existent URI", "default": true},
+        "protocol_version":      {"type": "string", "title": "MCP protocol version", "default": ""},
+        "transport_override":    {"type": "string", "title": "Transport override", "default": "", "enum": ["", "http", "sse", "ws", "stdio"]}
+      },
+      "default_config": {"timeout": 20, "flood_count": 50, "test_unauth": true, "test_malformed": true, "test_unknown_uri": true, "protocol_version": "", "transport_override": ""},
+      "tags": ["mcp", "notifications", "subscriptions", "dos", "server_side", "pro"],
+      "mcp_versions": ["2024-11-05", "2025-03-26", "2025-06-18"],
+      "references": ["https://modelcontextprotocol.io/specification/2025-06-18/server/resources"]
+    },
+    {
+      "file": "ws_transport_hardening.py",
+      "name": "WebSocket Transport Hardening (Pro)",
+      "subcategory": "Data-in-Transit Attacks",
+      "severity": "high",
+      "attack_type": "exfiltration",
+      "mitre_id": "T1557",
+      "description": "WebSocket-transport-specific hardening checks. Issues raw HTTP upgrades (not via MCPClient) to verify Origin header validation (CSWSH), Sec-WebSocket-Protocol negotiation strictness, and acceptance of upgrades without HTTP-layer Authorization on auth-configured targets.",
+      "config_schema": {
+        "timeout":              {"type": "number", "title": "Handshake timeout (s)", "default": 8, "minimum": 1, "maximum": 60},
+        "test_origin_cswsh":    {"type": "boolean", "title": "Test Origin / CSWSH", "default": true},
+        "test_subprotocols":    {"type": "boolean", "title": "Test subprotocol negotiation", "default": true},
+        "test_no_auth":         {"type": "boolean", "title": "Test upgrade without auth", "default": true}
+      },
+      "default_config": {"timeout": 8, "test_origin_cswsh": true, "test_subprotocols": true, "test_no_auth": true},
+      "tags": ["mcp", "websocket", "cswsh", "transport", "data_in_transit", "pro"],
+      "mcp_versions": ["2024-11-05"],
+      "references": [
+        "https://owasp.org/www-community/attacks/Cross_Site_WebSocket_Hijacking_(CSWSH)",
+        "https://datatracker.ietf.org/doc/html/rfc6455"
+      ]
+    },
+    {
+      "file": "http_session_hardening.py",
+      "name": "HTTP Session Hardening (Pro)",
+      "subcategory": "Data-in-Transit Attacks",
+      "severity": "high",
+      "attack_type": "exploitation",
+      "mitre_id": "T1539",
+      "description": "HTTP / streamable-HTTP transport-specific. Audits Set-Cookie flags (HttpOnly / Secure / SameSite), session fixation (server accepts attacker-supplied session before auth), session-ID predictability (Shannon entropy across N samples), and Mcp-Session-Id binding (server accepts arbitrary tampered values).",
+      "config_schema": {
+        "timeout":                  {"type": "number", "title": "Per-request timeout (s)", "default": 10, "minimum": 1, "maximum": 60},
+        "test_cookie_flags":        {"type": "boolean", "title": "Audit cookie flags", "default": true},
+        "test_fixation":            {"type": "boolean", "title": "Test session fixation", "default": true},
+        "test_predictability":      {"type": "boolean", "title": "Test session-ID entropy", "default": true},
+        "test_mcp_session_header":  {"type": "boolean", "title": "Test Mcp-Session-Id binding", "default": true},
+        "sample_count":             {"type": "integer", "title": "Sessions to sample for entropy", "default": 10, "minimum": 3, "maximum": 200}
+      },
+      "default_config": {"timeout": 10, "test_cookie_flags": true, "test_fixation": true, "test_predictability": true, "test_mcp_session_header": true, "sample_count": 10},
+      "tags": ["mcp", "http", "session", "cookie", "data_in_transit", "pro"],
+      "mcp_versions": ["2024-11-05", "2025-03-26", "2025-06-18"],
+      "references": [
+        "https://cwe.mitre.org/data/definitions/1004.html",
+        "https://cwe.mitre.org/data/definitions/384.html"
+      ]
+    },
+    {
       "file": "protocol_version_downgrade.py",
       "name": "Protocol Version Downgrade (Pro)",
       "subcategory": "Server-Side Attacks",
@@ -539,6 +678,7 @@
       },
       "default_config": {"timeout": 20, "versions_to_test": [], "test_batch": true, "test_reinit": true, "transport_override": ""},
       "tags": ["mcp", "downgrade", "protocol", "server_side", "pro"],
+      "mcp_versions": ["2024-11-05", "2025-03-26", "2025-06-18", "0.1.0"],
       "references": ["https://modelcontextprotocol.io/specification/2025-06-18/changelog"]
     }
   ]

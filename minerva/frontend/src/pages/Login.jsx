@@ -38,7 +38,7 @@ export default function Login() {
           <input
             type="email"
             className="input"
-            placeholder="admin@aegis.local"
+            placeholder="admin@minerva.local"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
@@ -84,9 +84,15 @@ export default function Login() {
       </form>
 
       <div className="mt-6 pt-6 border-t border-dark-800">
-        <p className="text-xs text-dark-500 text-center">
-          Default credentials: <code className="text-dark-400">admin@aegis.local</code> / <code className="text-dark-400">admin123</code>
+        <p className="text-xs text-dark-500 text-center mb-2">
+          Default credentials (FYP demo):
         </p>
+        <div className="text-xs text-dark-400 space-y-1 text-center">
+          <div><code>admin@minerva.local</code> / <code>admin123</code> — full access</div>
+          <div><code>operator@minerva.local</code> / <code>operator123</code> — run attacks</div>
+          <div><code>analyst@minerva.local</code> / <code>analyst123</code> — review only</div>
+          <div><code>viewer@minerva.local</code> / <code>viewer123</code> — read only</div>
+        </div>
       </div>
     </div>
   )

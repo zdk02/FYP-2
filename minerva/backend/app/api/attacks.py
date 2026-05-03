@@ -380,6 +380,10 @@ def test_attack(attack_id):
         'base_url': 'http://localhost:8080'
     })
     dry_run = data.get('dry_run', False)
+    safe_mode_req = data.get('safe_mode')
+    dry_run_payloads_req = data.get('dry_run_payloads')  # log-only mode
+    engagement_id = (data.get('engagement_id')
+                     or request.headers.get('X-Engagement-Id'))
 
     # If caller sent a target_id, fully hydrate target_config from DB row.
     # This ensures stdio / SSE / auth'd targets carry their full config
@@ -478,6 +482,10 @@ def test_attack(attack_id):
                 target_config, target_row=t_row)
 
             result['execution_log'].append("[INFO] Executing attack script...")
+            try:
+                attack_tags_list = json.loads(attack.tags) if attack.tags else []
+            except Exception:
+                attack_tags_list = []
             script_result = attack_runner.run_python_attack(
                 attack.script_content,
                 target=target_config,
@@ -485,21 +493,88 @@ def test_attack(attack_id):
                 attack_id=attack.id,
                 timeout=attack.timeout or 300,
                 execution_id='test-' + attack.id[:8],
+                engagement_id=engagement_id,
+                safe_mode=safe_mode_req,
+                dry_run=dry_run_payloads_req,
+                attack_tags=attack_tags_list,
+                attack_name=attack.name,
             )
-            result['status'] = 'success' if script_result.get('success') else 'completed'
+            status_str = (script_result.get('summary', {}) or {}).get('status') or ''
+            if status_str.startswith('scope_violation') or status_str == 'blocked_safe_mode':
+                result['status'] = 'rejected'
+            else:
+                result['status'] = 'success' if script_result.get('success') else 'completed'
             result['findings'] = script_result.get('findings', [])
             result['evidence'] = script_result.get('evidence', [])
             result['summary'] = script_result.get('summary', {})
             for log in script_result.get('logs', []):
                 result['execution_log'].append(log)
-            result['message'] = (
-                f"Attack completed — {len(result['findings'])} finding(s)"
-            )
+            if result['status'] == 'rejected':
+                result['message'] = (
+                    "Attack run REJECTED by engagement preflight gate "
+                    "(target out-of-scope, kill switch, or quota)."
+                )
+            else:
+                result['message'] = (
+                    f"Attack completed — {len(result['findings'])} finding(s)"
+                )
+
+            # Upsert FindingTriage rows for cross-run dedup / FP memory
+            try:
+                from app.models import FindingTriage as _FT
+                from app import db as _db
+                import datetime as _dt2
+                _now = _dt2.datetime.utcnow()
+                for _f in result['findings']:
+                    _key = _f.get('dedup_key')
+                    if not _key:
+                        continue
+                    _row = _FT.query.filter_by(dedup_key=_key).first()
+                    if _row:
+                        _row.last_seen = _now
+                        _row.last_run_id = script_result.get('summary', {}).get('run_id')
+                        _row.severity = _f.get('severity') or _row.severity
+                        _row.confidence = _f.get('confidence') or _row.confidence
+                        # Inherit status into emitted finding
+                        _f['triage_status'] = _row.status
+                    else:
+                        _row = _FT(
+                            dedup_key=_key,
+                            engagement_id=engagement_id,
+                            target_id=target_config.get('target_id'),
+                            attack_id=attack.id,
+                            tool=_f.get('tool'),
+                            parameter=_f.get('parameter'),
+                            payload_class=_f.get('category'),
+                            title=_f.get('title'),
+                            severity=_f.get('severity'),
+                            status='open',
+                            confidence=_f.get('confidence'),
+                            last_run_id=script_result.get('summary', {}).get('run_id'),
+                        )
+                        _db.session.add(_row)
+                        _f['triage_status'] = 'open'
+                _db.session.commit()
+            except Exception:
+                try:
+                    from app import db as _db
+                    _db.session.rollback()
+                except Exception:
+                    pass
+
+            # Enrich findings with CVSS v3.1 + v4 + compliance mapping
+            try:
+                from app.services import cvss as _cvss
+                from app.services import compliance as _comp
+                result['findings'] = _comp.enrich(_cvss.enrich_with_v4(result['findings']))
+            except Exception:
+                pass
 
             try:
                 from app.services import notifier as _notifier
                 for _f in result['findings']:
-                    _notifier.notify_finding(_f, target=target_config)
+                    _notifier.notify_finding(_f, target=target_config,
+                                             engagement_id=engagement_id)
             except Exception:
                 pass
     

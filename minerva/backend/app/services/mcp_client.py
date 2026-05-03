@@ -997,10 +997,62 @@ def negotiate_protocol_version(target: dict, *,
     return {"accepted": accepted, "rejected": rejected, "raw": raw}
 
 
+def call(target: dict, method: str, params: dict | None = None,
+         *, timeout: float = 30.0,
+         protocol_version: str | None = None,
+         force_transport: str | None = None,
+         notification: bool = False) -> dict:
+    """One-shot JSON-RPC call to an MCP target.
+
+    Convenience wrapper around `MCPClient.from_target(...).send(...)`
+    for attack scripts that don't need to keep an MCP session open.
+    Always returns a structured response dict (status / request /
+    response / latency_ms / error / transport / headers); never raises
+    network errors into the caller.
+
+    The attack_runner replaces this with an engagement-aware shim
+    that enforces dry-run / kill-switch / quota when a script is
+    executing inside a run.
+    """
+    try:
+        client = MCPClient.from_target(
+            target, timeout=timeout,
+            protocol_version=protocol_version,
+            force_transport=force_transport,
+        )
+    except Exception as e:
+        return {
+            "transport": (target.get("protocol") if isinstance(target, dict) else None) or "?",
+            "request": {"method": method, "params": params or {}},
+            "response": None,
+            "status": None,
+            "latency_ms": 0,
+            "headers": {},
+            "error": f"client_init_failed: {type(e).__name__}: {e}",
+        }
+    try:
+        return client.send(method, params, notification=notification)
+    except Exception as e:
+        return {
+            "transport": getattr(client, "transport_name", "?"),
+            "request": {"method": method, "params": params or {}},
+            "response": None,
+            "status": None,
+            "latency_ms": 0,
+            "headers": {},
+            "error": f"send_failed: {type(e).__name__}: {e}",
+        }
+    finally:
+        try:
+            client.close()
+        except Exception:
+            pass
+
+
 # Public surface
 __all__ = [
     "MCPClient",
     "HTTPTransport", "SSETransport", "WebSocketTransport", "StdioTransport",
-    "apply_auth", "auto_detect_transport",
+    "apply_auth", "auto_detect_transport", "call",
     "KNOWN_PROTOCOL_VERSIONS", "negotiate_protocol_version",
 ]

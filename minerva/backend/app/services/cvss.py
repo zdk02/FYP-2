@@ -235,5 +235,76 @@ def classify_by_category(findings: list[dict]) -> dict[str, list[dict]]:
     return out
 
 
-__all__ = ["score_finding", "enrich", "dedupe", "risk_grade",
-           "classify_by_category"]
+# ---------------------------------------------------------------------------
+# CVSS 4.0 vector emission
+# ---------------------------------------------------------------------------
+# Minerva does not implement the full CVSS v4 calculator (it's a 100+
+# line lookup table). Instead, for every category that has a v3.1
+# vector mapped above, we synthesise a corresponding CVSS:4.0 base
+# vector with the same impact/exploitability shape. The numeric score
+# is derived heuristically (categorical-table). This is acceptable for
+# pentest reports — the vector strings are what consumers (Defectdojo,
+# JIRA plugins, SARIF importers) read.
+
+_V31_TO_V40_AV = {"N": "N", "A": "A", "L": "L", "P": "P"}
+_V31_TO_V40_AC = {"L": "L", "H": "H"}
+_V31_TO_V40_PR = {"N": "N", "L": "L", "H": "H"}
+_V31_TO_V40_UI = {"N": "N", "R": "P"}  # v4: Passive (was Required)
+
+def _v31_dict(vec: str) -> dict:
+    out = {}
+    for part in (vec or "").replace("CVSS:3.1/", "").split("/"):
+        if ":" in part:
+            k, v = part.split(":", 1)
+            out[k] = v
+    return out
+
+
+def _v40_vector_from_v31(vec31: str) -> str:
+    parts = _v31_dict(vec31)
+    av = _V31_TO_V40_AV.get(parts.get("AV", "N"), "N")
+    ac = _V31_TO_V40_AC.get(parts.get("AC", "L"), "L")
+    pr = _V31_TO_V40_PR.get(parts.get("PR", "N"), "N")
+    ui = _V31_TO_V40_UI.get(parts.get("UI", "N"), "N")
+    # CVSS:4.0 splits impact into Vulnerable System (VC/VI/VA) and
+    # Subsequent System (SC/SI/SA). We mirror v3.1 to VC/VI/VA and
+    # use the v3.1 Scope flag to populate SC/SI/SA:
+    s = parts.get("S", "U")
+    vc, vi, va = parts.get("C", "L"), parts.get("I", "L"), parts.get("A", "L")
+    if s == "C":
+        sc, si, sa = vc, vi, va
+    else:
+        sc, si, sa = "N", "N", "N"
+    # AT (Attack Requirements) — assume None unless we know better
+    at = "N"
+    return (f"CVSS:4.0/AV:{av}/AC:{ac}/AT:{at}/PR:{pr}/UI:{ui}/"
+            f"VC:{vc}/VI:{vi}/VA:{va}/SC:{sc}/SI:{si}/SA:{sa}")
+
+
+def score_finding_v4(finding: dict) -> dict:
+    """Return a CVSS:4.0 vector + heuristic numeric score for a finding."""
+    base = score_finding(finding)
+    v40 = _v40_vector_from_v31(base["cvss_vector"])
+    return {
+        "cvss_v40_vector": v40,
+        "cvss_v40_score": base["cvss_score"],  # mirror v3.1 numeric for now
+        "cvss_v40_severity": base["cvss_severity"],
+    }
+
+
+def enrich_with_v4(findings: list[dict]) -> list[dict]:
+    """Add both v3.1 and v4 vectors to each finding."""
+    out = []
+    for f in findings:
+        if not isinstance(f, dict):
+            continue
+        copy = dict(f)
+        copy.update(score_finding(f))
+        copy.update(score_finding_v4(f))
+        out.append(copy)
+    return out
+
+
+__all__ = ["score_finding", "score_finding_v4",
+           "enrich", "enrich_with_v4",
+           "dedupe", "risk_grade", "classify_by_category"]

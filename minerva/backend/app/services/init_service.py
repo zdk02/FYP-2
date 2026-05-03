@@ -4,6 +4,7 @@ Initialization service for default data
 from app import db
 from app.models import User, MainCategory, SubCategory, SystemSettings
 from sqlalchemy import inspect, text
+from datetime import datetime
 import json
 
 
@@ -27,6 +28,27 @@ def sync_schema_additions():
         ],
         'attack_executions': [
             ('notes', 'TEXT'),
+            ('engagement_id', 'VARCHAR(36)'),
+            ('safe_mode', 'BOOLEAN DEFAULT 0'),
+            ('dry_run', 'BOOLEAN DEFAULT 0'),
+            ('replay_of', 'VARCHAR(36)'),
+            ('dedup_key', 'VARCHAR(64)'),
+        ],
+        'campaigns': [
+            ('engagement_id', 'VARCHAR(36)'),
+        ],
+        'audit_logs': [
+            ('engagement_id', 'VARCHAR(36)'),
+            ('prev_hash', 'VARCHAR(64)'),
+            ('entry_hash', 'VARCHAR(64)'),
+            ('sequence', 'INTEGER'),
+        ],
+        'attacks': [
+            ('mcp_versions', 'TEXT'),
+        ],
+        'reports': [
+            ('engagement_id', 'VARCHAR(36)'),
+            ('template', "VARCHAR(50) DEFAULT 'technical'"),
         ],
     }
     with db.engine.begin() as conn:
@@ -47,16 +69,18 @@ def initialize_default_data():
     """Initialize the database with default data"""
     sync_schema_additions()
     
-    # Create default admin user if not exists
-    if not User.query.filter_by(username='admin').first():
-        admin = User(
-            username='admin',
-            email='admin@minerva.local',
-            role='admin',
-            is_active=True
-        )
-        admin.set_password('admin123')  # Change in production
-        db.session.add(admin)
+    # Create default users (one per role) for the FYP demo
+    default_users = [
+        ('admin',    'admin@minerva.local',    'admin',    'admin123'),
+        ('operator', 'operator@minerva.local', 'operator', 'operator123'),
+        ('analyst',  'analyst@minerva.local',  'analyst',  'analyst123'),
+        ('viewer',   'viewer@minerva.local',   'viewer',   'viewer123'),
+    ]
+    for username, email, role, pw in default_users:
+        if not User.query.filter_by(username=username).first():
+            u = User(username=username, email=email, role=role, is_active=True)
+            u.set_password(pw)
+            db.session.add(u)
     
     # Create default categories
     default_categories = [
@@ -156,6 +180,52 @@ def initialize_default_data():
         if not SystemSettings.query.filter_by(key=setting['key']).first():
             db.session.add(SystemSettings(**setting))
     
+    # Seed the default "FYP Demo" engagement so the scope gate doesn't
+    # break the out-of-the-box demo flow.
+    try:
+        from app.models import Engagement
+        existing = Engagement.query.filter_by(name='FYP Demo').first()
+        if not existing:
+            from datetime import timedelta
+            import secrets
+            owner = User.query.filter_by(username='admin').first()
+            eng = Engagement(
+                name='FYP Demo',
+                client_name='Final Year Project Demonstration',
+                description=(
+                    'Default engagement for the Minerva FYP demo. '
+                    'Allowlists localhost + RFC1918 ranges.'
+                ),
+                signed_off_by='Minerva FYP author (self-authorised demo)',
+                rules_of_engagement=(
+                    'Demo only. Use against bundled demo_mcp_server or '
+                    'your own deliberately-vulnerable lab targets.'
+                ),
+                authorized_targets=json.dumps([
+                    '127.0.0.1', 'localhost', '::1',
+                    '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16',
+                ]),
+                time_window_start=datetime.utcnow() - timedelta(hours=1),
+                time_window_end=datetime.utcnow() + timedelta(days=365),
+                max_requests=1000000,
+                max_wall_seconds=86400,
+                max_concurrent=8,
+                safe_mode=False,
+                dry_run_default=False,
+                webhook_secret=secrets.token_hex(16),
+                notify_min_severity='high',
+                status='active',
+                is_active_default=True,
+                health_threshold_x=5.0,
+                created_by=owner.id if owner else None,
+            )
+            Engagement.query.filter(
+                Engagement.is_active_default == True  # noqa: E712
+            ).update({'is_active_default': False})
+            db.session.add(eng)
+    except Exception as e:
+        print(f"  [warn] could not seed default engagement: {e}")
+
     try:
         db.session.commit()
     except Exception as e:

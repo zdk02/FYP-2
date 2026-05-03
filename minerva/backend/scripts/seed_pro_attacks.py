@@ -167,6 +167,8 @@ def upsert_attack(db, Attack, spec, subcategory_id, script_content):
         version="1.0.0",
         tags=json.dumps(spec.get("tags") or []),
         references=json.dumps(spec.get("references") or []),
+        mcp_versions=json.dumps(spec.get("mcp_versions") or
+                                ["2024-11-05", "2025-03-26", "2025-06-18"]),
         is_active=True,
         is_verified=True,
         subcategory_id=subcategory_id,

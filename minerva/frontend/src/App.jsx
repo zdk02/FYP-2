@@ -21,6 +21,8 @@ import Scans from './pages/Scans'
 import Scanners from './pages/Scanners'
 import ScannerDetail from './pages/ScannerDetail'
 import Settings from './pages/Settings'
+import Engagements from './pages/Engagements'
+import AuditLog from './pages/AuditLog'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminCategories from './pages/admin/AdminCategories'
 import AdminAttacks from './pages/admin/AdminAttacks'
@@ -99,6 +101,12 @@ function App() {
         {/* Scanners (YAML plugin-based) */}
         <Route path="/scanners" element={<Scanners />} />
         <Route path="/scanners/:pluginId" element={<ScannerDetail />} />
+
+        {/* Engagements (legal scope) */}
+        <Route path="/engagements" element={<Engagements />} />
+
+        {/* Audit log */}
+        <Route path="/audit" element={<AuditLog />} />
 
         {/* Settings */}
         <Route path="/settings" element={<Settings />} />

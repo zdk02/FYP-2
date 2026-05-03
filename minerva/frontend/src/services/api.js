@@ -254,3 +254,51 @@ export const authApi = {
   refresh: (refreshToken) => api.post('/auth/refresh', { refresh_token: refreshToken }).then(r => r.data),
   me: () => api.get('/auth/me').then(r => r.data),
 }
+
+// Engagements API
+export const engagementsApi = {
+  list: () => api.get('/engagements').then(r => r.data),
+  active: () => api.get('/engagements/active').then(r => r.data),
+  get: (id) => api.get(`/engagements/${id}`).then(r => r.data),
+  create: (data) => api.post('/engagements', data).then(r => r.data),
+  update: (id, data) => api.put(`/engagements/${id}`, data).then(r => r.data),
+  delete: (id) => api.delete(`/engagements/${id}`).then(r => r.data),
+  activate: (id) => api.post(`/engagements/${id}/activate`).then(r => r.data),
+  kill: (id) => api.post(`/engagements/${id}/kill`).then(r => r.data),
+  revive: (id) => api.post(`/engagements/${id}/revive`).then(r => r.data),
+  resetQuota: (id) => api.post(`/engagements/${id}/reset_quota`).then(r => r.data),
+  uploadSow: (id, file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    return api.post(`/engagements/${id}/sow`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(r => r.data)
+  },
+  checkScope: (id, host) => api.post(`/engagements/${id}/check_scope`, { host }).then(r => r.data),
+}
+
+// Audit log API
+export const auditApi = {
+  list: (params) => api.get('/audit', { params }).then(r => r.data),
+  verify: () => api.post('/audit/verify').then(r => r.data),
+}
+
+// Findings triage / dedup / diff
+export const triageApi = {
+  list: (params) => api.get('/findings/triage', { params }).then(r => r.data),
+  upsert: (data) => api.post('/findings/triage', data).then(r => r.data),
+  setStatus: (id, status, note) => api.post(`/findings/triage/${id}/status`, { status, note }).then(r => r.data),
+  diff: (run_a_id, run_b_id) => api.post('/findings/diff', { run_a_id, run_b_id }).then(r => r.data),
+}
+
+// Compliance API
+export const complianceApi = {
+  mappings: () => api.get('/compliance/mappings').then(r => r.data),
+  forAttack: (attackId) => api.get(`/compliance/attack/${attackId}`).then(r => r.data),
+}
+
+// Replay API
+export const replayApi = {
+  fromFinding: (executionId, findingId) =>
+    api.post(`/executions/${executionId}/replay`, { finding_id: findingId }).then(r => r.data),
+}
